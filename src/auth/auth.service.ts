@@ -1,8 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException
+ } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as argon2 from "argon2"
 import { JwtService } from '@nestjs/jwt';
 import { IUser } from './types/types';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +17,7 @@ export class AuthService {
   ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userService.getByEmail(email);
+    const user = await this.userService.findByEmail(email);
     const passwordIsMatch = await argon2.verify(user.password, password)
 
     if (user && user.password === password) {
@@ -27,5 +32,13 @@ export class AuthService {
       email,
       refreshToken: this.jwtService.sign({ id:user.id, email:user.email}),
     }
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+     const user = await this.userService.findByEmail(forgotPasswordDto.email);
+
+     if (!user) {
+         throw new BadRequestException('Не действительный email')
+     }
   }
 }

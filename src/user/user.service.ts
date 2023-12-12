@@ -32,7 +32,7 @@ export class UserService {
     return { user, refreshToken };
   }
   
-  async getByEmail(email: string) {
+  async findByEmail(email: string) {
     return await this.userRepository.findOne({ where: { 
       email:email 
     } })
