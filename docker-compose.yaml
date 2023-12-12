@@ -1,0 +1,41 @@
+version: '3.5'
+
+services:
+  api:
+    container_name: api
+    env_file: .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    environment:
+      REDIS_HOST: redis
+      DB_HOST: postgre_db
+    networks:
+      - my_network
+    depends_on:
+      - postgre_db
+      - redis
+  postgre_db:
+    container_name: postgre_db
+    image: postgres:10
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+    restart: unless-stopped
+    networks:
+      - my_network
+  redis:
+    image: redis:latest
+    container_name: redis
+    networks:
+      - my_network
+    volumes:
+      - data:/data
+    restart: always
+volumes:
+  data:
+networks:
+  my_network:
+    driver: bridge

@@ -10,14 +10,13 @@ import { JwtModule } from '@nestjs/jwt';
   imports: [
     TypeOrmModule.forFeature([User]), 
       JwtModule.registerAsync({
-       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
         signOptions: { expiresIn: '30d' },
       }),
-      inject: [ConfigService],
+      inject: [ConfigService],  
     }),
-    ,
+    ConfigModule,
   ],
   controllers: [UserController],
   providers: [UserService],

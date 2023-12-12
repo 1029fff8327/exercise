@@ -27,12 +27,12 @@ export class UserService {
       password: await argon2.hash(createUserDto.password),
     })
 
-    const token = this.jwtService.sign({ email: createUserDto.email })
+    const refreshToken = this.jwtService.sign({ email: createUserDto.email })
 
-    return { user, token };
+    return { user, refreshToken };
   }
   
-  async findOne(email: string) {
+  async getByEmail(email: string) {
     return await this.userRepository.findOne({ where: { 
       email:email 
     } })
