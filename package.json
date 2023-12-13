@@ -33,6 +33,7 @@
     "argon2": "^0.31.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "cookie-parser": "^1.4.6",
     "csurf": "^1.11.0",
     "ioredis": "^5.3.2",
     "jsonwebtoken": "^9.0.2",
@@ -43,7 +44,8 @@
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.17"
+    "typeorm": "^0.3.17",
+    "xss": "^1.0.14"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
