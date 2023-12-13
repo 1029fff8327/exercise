@@ -6,8 +6,12 @@ export class ActivationController {
   constructor(private readonly activationService: ActivationService) {}
 
   @Post('send-email')
-  async sendActivationEmail(@Body('email') email: string): Promise<{ message: string }> {
-    const activationToken = await this.activationService.sendActivationEmail(email);
+  async sendActivationEmail(
+    @Body('email') email: string,
+    @Body('subject') subject: string,
+    @Body('text') text: string,
+  ): Promise<{ message: string }> {
+    await this.activationService.sendActivationEmail(email, subject, text);
 
     return { message: 'Activation email sent successfully' };
   }

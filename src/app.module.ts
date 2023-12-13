@@ -3,9 +3,6 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ActivationService } from './activation/activation.service';
-import { ActivationController } from './activation/activation.controller';
-import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
     imports: [
@@ -26,22 +23,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
       }),
       inject: [ConfigService]
   }), 
-        MailerModule.forRoot({
-          transport: {
-            host: 'smtp.example.com', // Адрес SMTP-сервера
-            port: 587, // Порт SMTP-сервера
-            secure: false, // true для использования SSL, false для TLS
-            auth: {
-              user: 'your_username', // Имя пользователя
-              pass: 'your_password', // Пароль
-            },
-          },
-          defaults: {
-            from: '"No Reply" <noreply@example.com>', // Адрес, от которого будут отправляться письма
-          },
-      })  
+   
 ],
-  controllers: [ActivationController],
-  providers: [ActivationService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
