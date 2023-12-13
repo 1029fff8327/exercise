@@ -38,15 +38,4 @@ export class UserService {
     } })
   }
 
-  async findUserById(userId: string): Promise<User | null> {
-    try {
-      const user = await this.user.userEntity.findById(userId).exec();
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-      return user;
-    } catch (error) {
-      throw new NotFoundException('User not found');
-    }
-  }
  }
