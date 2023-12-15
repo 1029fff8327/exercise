@@ -1,6 +1,6 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IUser } from '../types/types';
 
@@ -15,6 +15,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(user: IUser) {
-    return { id:user.id, email:user.email};
+    const sanitizedUser = { id: escape(user.id), email: escape(user.email) };
+
+    if (!sanitizedUser.id || !sanitizedUser.email) {
+      throw new BadRequestException('Неверные пользовательские данные');
+    }
+
+    return sanitizedUser;
   }
 }

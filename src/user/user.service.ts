@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.model';
@@ -31,6 +31,38 @@ export class UserService {
 
     return { user, refreshToken };
   }
+
+  async generateResetToken(user: User): Promise<string> {
+
+    const resetToken = 'generate_your_reset_token_logic_here';
+    
+    user.resetToken = resetToken;
+    await this.userRepository.save(user);
+
+    return resetToken;
+  }
+
+  async verifyResetToken(resetToken: string): Promise<User | null> {
+
+    const user = await this.userRepository.findOne({ where: { resetToken } });
+
+    if (!user) {
+      throw new BadRequestException('Ошибка');
+    }
+
+    return user;
+  }
+
+  async removeResetToken(user: User): Promise<void> {
+
+    user.resetToken = null;
+    await this.userRepository.save(user);
+  }
+
+  async updatePassword(user: User): Promise<void> {
+
+    await this.userRepository.save(user);
+  }
   
   async findByEmail(email: string) {
     return await this.userRepository.findOne({ where: { 
@@ -38,4 +70,5 @@ export class UserService {
     } })
   }
 
+  
  }

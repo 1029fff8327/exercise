@@ -15,6 +15,12 @@ email: string;
 @Column()
 password: string;
 
+@Column({ default: false }) 
+isActivated: boolean;
+
+@Column({ nullable: true })
+resetToken: string;
+
 @CreateDateColumn()
 createdAt: Date;
 

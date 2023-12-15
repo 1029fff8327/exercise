@@ -9,7 +9,7 @@ export class MailService {
     this.transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
-      secure: false, // true для 465, false для других портов
+      secure: false,
       auth: {
         user: 'your-email@gmail.com',
         pass: 'your-password',
@@ -27,10 +27,18 @@ export class MailService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log(`Email sent to ${to} with subject: ${subject}`);
+      console.log(`Электронное письмо, отправленное по адресу ${to} с предметом: ${subject}`);
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error("Ошибка отправки электронного письма:", error);
       throw error;
     }
+  }
+
+  async sendActivationEmail(to: string, token: string): Promise<void> {
+    const activationLink = `http://your-frontend-url/?activation_key=${token}`;
+    const subject = 'Активация учетной записи';
+    const text = `Для активации вашей учетной записи перейдите по ссылке: ${activationLink}`;
+
+    await this.sendMail(to, subject, text);
   }
 }
