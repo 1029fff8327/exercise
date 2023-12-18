@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable} from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.model';
@@ -14,24 +14,31 @@ export class UserService {
     private readonly jwtService: JwtService,
   ) {}
 
- async create(createUserDto: CreateUserDto) {
-    const existUser = await this.userRepository.findOne({
-      where: {
+  async create(createUserDto: CreateUserDto) {
+    try {
+      const existUser = await this.userRepository.findOne({
+        where: {
+          email: createUserDto.email,
+        },
+      });
+
+      if (existUser) {
+        throw new BadRequestException('Этот электронный адрес уже существует');
+      }
+
+      const user = await this.userRepository.save({
         email: createUserDto.email,
-      },
-    })
-    if(existUser) throw new BadRequestException('Этот электронный адрес уже существует')
+        password: await argon2.hash(createUserDto.password),
+      });
 
-    const user = await this.userRepository.save({
-      email: createUserDto.email,
-      password: await argon2.hash(createUserDto.password),
-    })
+      const refreshToken = this.jwtService.sign({ email: createUserDto.email });
 
-    const refreshToken = this.jwtService.sign({ email: createUserDto.email })
-
-    return { user, refreshToken };
+      return { user, refreshToken };
+    } catch (error) {
+      console.error('Ошибка при создании пользователя:', error);
+      throw new InternalServerErrorException('Внутренняя ошибка сервера');
+    }
   }
-
   async generateResetToken(user: User): Promise<string> {
 
     const resetToken = 'generate_your_reset_token_logic_here';

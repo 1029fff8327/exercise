@@ -1,20 +1,21 @@
 import {
   BadRequestException,
   Injectable,
-  UnauthorizedException
+  UnauthorizedException,
  } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
-import * as argon2 from "argon2"
+import * as argon2 from "argon2";
 import { JwtService } from '@nestjs/jwt';
 import { IUser } from './types/types';
 import { MailService } from 'src/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/user/user.model';
 import { Repository } from 'typeorm';
+import { RedisService } from '@liaoliaots/nestjs-redis';
 
 @Injectable()
 export class AuthService {
-
+  private readonly redisClient;
   private readonly userRepository: Repository<User>;
 
  constructor(
@@ -22,7 +23,10 @@ export class AuthService {
   private readonly jwtService: JwtService,
   private readonly mailService: MailService,
   private readonly configService: ConfigService,
-  ) {}
+  private readonly redisService: RedisService,
+  ) {
+    this.redisClient = this.redisService.getClient();
+  }
 
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.userService.findByEmail(email);
@@ -50,10 +54,8 @@ export class AuthService {
       }
   
       try {
- 
         user.password = await argon2.hash(newPassword);
         await this.userService.updatePassword(user);
-  
         await this.userService.removeResetToken(user);
   
         await this.mailService.sendMail(
@@ -73,9 +75,56 @@ export class AuthService {
         { expiresIn: this.configService.get<number>('JWT_RESET_EXPIRATION_TIME') },
       );
   
+      await this.redisClient.set(`resetToken:${resetToken}`, user.id, 'EX', 3600); 
+
       await this.userRepository.save(user);
   
       return resetToken;
+    } catch (error) {
+      console.error('Ошибка, генерирующая токен сброса:', error);
+      return null;
+    }
+
+    async generateAccessToken(user: IUser): Promise<string> {
+      try {
+        
+        const payload = { sub: user.id, email: user.email };
+  
+        const accessToken = this.jwtService.sign(payload);
+  
+        return accessToken;
+      } catch (error) {
+        throw new UnauthorizedException('Failed to generate access token');
+      }
+    }
+
+    async verifyResetToken(resetToken: string): Promise<User | null> {
+      try {
+        const userId = await this.redisClient.get(`resetToken:${resetToken}`);
+  
+        if (!userId) {
+          throw new BadRequestException('Недействительный или просроченный токен сброса');
+        }
+  
+        const user = await this.userRepository.findOne(userId);
+  
+        if (!user) {
+          throw new BadRequestException('Ошибка');
+        }
+  
+        return user;
+      } catch (error) {
+        console.error('Ошибка при проверке токена сброса:', error);
+        return null;
+      }
+    }
+  
+    async removeResetToken(user: User): Promise<void> {
+      try {
+        await this.redisClient.del(`resetToken:${user.resetToken}`);
+      } catch (error) {
+        console.error('Ошибка при удалении токена сброса:', error);
+      }
     }
 
   async createActivationToken(user: IUser): Promise<string> {
