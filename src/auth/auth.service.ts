@@ -84,19 +84,47 @@ export class AuthService {
       console.error('Ошибка, генерирующая токен сброса:', error);
       return null;
     }
+   
+    public generateAccessToken(user: IUser): string {
+    // Your logic for generating a new access token
+    // For example, use JwtService to sign a new token
 
-    async generateAccessToken(user: IUser): Promise<string> {
+    const payload = { sub: user.id, email: user.email };
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+
+    return accessToken;
+  }
+
+
+  generateRefreshToken(user: IUser): string {
+    const { id, email } = user;
+    if (!id || !email) {
+      throw new BadRequestException('Invalid user data for refresh token generation');
+    }
+  
+    return this.jwtService.sign({ id, email }, { expiresIn: this.configService.get<number>('JWT_REFRESH_EXPIRATION_TIME') });
+  }
+
+    async refreshAccessToken(user: IUser): Promise<IUser> {
       try {
-        
-        const payload = { sub: user.id, email: user.email };
-  
-        const accessToken = this.jwtService.sign(payload);
-  
-        return accessToken;
+        // Generate a new access token
+        const refreshedAccessToken = this.generateAccessToken(user);
+    
+        if ('refreshToken' in user) {
+          (user as User).refreshToken = refreshedAccessToken;
+        }
+    
+        // Save the updated user entity to the database
+        await this.userRepository.save(user as User);
+    
+        // Return the user with the refreshed access token
+        return user as IUser;
       } catch (error) {
-        throw new UnauthorizedException('Failed to generate access token');
+        console.error('Failed to refresh access token:', error);
+        throw new BadRequestException('Failed to refresh access token');
       }
     }
+  
 
     async verifyResetToken(resetToken: string): Promise<User | null> {
       try {
