@@ -23,10 +23,13 @@ isActivated: boolean;
 @Column({  type: 'varchar', length: 255, nullable: true })
 resetToken: string;
 
+@Column({ type: 'varchar', length: 255, nullable: true })
+activationToken: string;
+
 @Column({ type: 'varchar', length: 255, nullable: true }) 
   refreshToken: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true }) 
+@Column({ type: 'varchar', length: 255, nullable: true }) 
   accessToken: string;
 
 @CreateDateColumn()

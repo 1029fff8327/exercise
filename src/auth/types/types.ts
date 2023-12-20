@@ -3,9 +3,11 @@ export interface IUser {
   email: string;
   password: string;
   isActivated: boolean;
-  resetToken: string;
+  resetToken?: string | null;
+  activationToken?: string | null;
   refreshToken?: string | null;
-  accessToken: string;
+  accessToken?: string | null;
+  expiresIn?: string;
   exp?: number; 
   iat?: number; 
   createdAt: Date;

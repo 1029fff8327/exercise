@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   UnauthorizedException,
  } from '@nestjs/common';
@@ -12,13 +14,15 @@ import { ConfigService } from '@nestjs/config';
 import { User } from 'src/user/user.model';
 import { Repository } from 'typeorm';
 import { RedisService } from '@liaoliaots/nestjs-redis';
+import { LoginDto } from './dto/Login.dto';
 
 @Injectable()
 export class AuthService {
   private readonly redisClient;
-  private readonly userRepository: Repository<User>;
+  
 
  constructor(
+  private readonly userRepository: Repository<User>,
   private readonly userService: UserService,
   private readonly jwtService: JwtService,
   private readonly mailService: MailService,
@@ -45,6 +49,27 @@ export class AuthService {
      );
     }
 
+    async someMethod(): Promise<void> {
+      try {
+        // Fetch the user from the UserService or wherever you get it
+        const userId = 'exampleUserId'; // Replace with the actual user ID
+        const user: User | undefined = await this.userService.findById(userId);
+  
+        // Now TypeScript knows the structure of the user object
+        // You can use 'user' in your code without TypeScript errors
+        if (user) {
+          // Your logic here
+          console.log(user.email); // Example usage
+        } else {
+          throw new BadRequestException('User not found');
+        }
+      } catch (error) {
+        // Handle the error
+        console.error('Error in someMethod:', error);
+        throw new BadRequestException('Failed to perform someMethod');
+      }
+    }
+  
     async resetPassword(resetToken: string, newPassword: string): Promise<void> {
     
       const user = await this.userService.verifyResetToken(resetToken);
@@ -95,7 +120,6 @@ export class AuthService {
     return accessToken;
   }
 
-
   generateRefreshToken(user: IUser): string {
     const { id, email } = user;
     if (!id || !email) {
@@ -125,7 +149,6 @@ export class AuthService {
       }
     }
   
-
     async verifyResetToken(resetToken: string): Promise<User | null> {
       try {
         const userId = await this.redisClient.get(`resetToken:${resetToken}`);
@@ -146,7 +169,35 @@ export class AuthService {
         return null;
       }
     }
+
+    async login(email: string, password: string) {
+      const user = await this.userService.findByEmail(email);
   
+      if (!user || !(await this.userService.checkPassword(user, password))) {
+        throw new BadRequestException('Invalid credentials');
+      }
+  
+      const payload: IUser = {
+        id: user.id,
+        email: user.email,
+        isActivated: user.isActivated,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        password: user.password, 
+      };
+  
+      const accessToken = this.jwtService.sign(payload);
+      const refreshToken = this.userService.generateRefreshToken(user);
+      const expiresIn = 'your-expires-in-value'; // Set your desired expiration time
+  
+      return {
+        accessToken,
+        refreshToken,
+        expiresIn,
+      };
+    }
+    
+
     async removeResetToken(user: User): Promise<void> {
       try {
         await this.redisClient.del(`resetToken:${user.resetToken}`);
@@ -187,19 +238,25 @@ export class AuthService {
     return sanitizedUser;
   }
   
-  async login(user: IUser): Promise<any> {
-    const { id, email } = user;
+  async activateAccount(token: string): Promise<void> {
+    try {
+      const decodedToken = await this.jwtService.verifyAsync(token);
 
-    const sanitizedUser = { id: escape(id), email: escape(email) };
+      const user = await this.userService.findByEmail(decodedToken.email);
 
-    if (!sanitizedUser.id || !sanitizedUser.email) {
-      throw new BadRequestException("Неверные пользовательские данные");
+      if (!user) {
+        throw new BadRequestException('Invalid activation token');
+      }
+
+      if (user.isActivated) {
+        throw new BadRequestException('Account is already activated');
+      }
+
+      await this.userService.updateUserActivation(user.id, true);
+
+    } catch (error) {
+      throw new BadRequestException('Invalid activation token');
     }
-
-    return {
-      id: sanitizedUser.id,
-      email: sanitizedUser.email,
-      refreshToken: this.jwtService.sign({ id: user.id, email: user.email }),
-    };
   }
+
 }
