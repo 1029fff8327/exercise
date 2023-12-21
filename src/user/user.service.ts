@@ -10,13 +10,13 @@ import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UserService {
+  private readonly authService: AuthService;
   user: any;
   constructor(
     @InjectRepository(User) 
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
-    private readonly authService: AuthService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {

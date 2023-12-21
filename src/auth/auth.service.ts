@@ -19,10 +19,9 @@ import { LoginDto } from './dto/Login.dto';
 @Injectable()
 export class AuthService {
   private readonly redisClient;
-  
+  private readonly userRepository: Repository<User>;
 
  constructor(
-  private readonly userRepository: Repository<User>,
   private readonly userService: UserService,
   private readonly jwtService: JwtService,
   private readonly mailService: MailService,

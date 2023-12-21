@@ -6,9 +6,8 @@ import { User } from './user.model';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { MailModule } from 'src/mail/mail.module';  
-import { AuthService } from 'src/auth/auth.service';
 import { MailService } from 'src/mail/mail.service';
-import { RedisModule, RedisModuleOptions } from '@liaoliaots/nestjs-redis';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -20,22 +19,16 @@ import { RedisModule, RedisModuleOptions } from '@liaoliaots/nestjs-redis';
       }),
       inject: [ConfigService],
     }),
+    forwardRef(() => AuthModule),
     forwardRef(() => MailModule), 
     ConfigModule,
-    RedisModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<RedisModuleOptions> => ({
-      }),
-      inject: [ConfigService],
-    }),
   ],
   controllers: [UserController],
   providers: [
-    AuthService,
     UserService,
     JwtService,
     MailService,
   ],
-  exports: [UserService],
+  exports: [UserService, TypeOrmModule],
 })
 export class UserModule {}
