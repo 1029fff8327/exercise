@@ -12,11 +12,10 @@ import {
     HttpException,
    } from '@nestjs/common';
   import { AuthService } from './auth.service';
-  import { LocalAuthGuard } from './guards/local.auth.guards';
   import { JwtAuthGuard } from './guards/jwt.auth.guard';
   import { ResetPasswordDto } from './reset/reset-password.dto';
   import { ResetPasswordConfirmDto } from './reset/reset-confirm-password.dto';
-  import { ApiBadRequestResponse, ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
+  import { ApiBadRequestResponse, ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
   import { LoginDto } from './dto/Login.dto';
 
   @ApiTags('auth')
@@ -24,7 +23,6 @@ import {
   export class AuthController {
     constructor(private readonly authService: AuthService) {}
   
-   
   @Post('login')
   @ApiOperation({ summary: 'Login to the application' })
   @ApiResponse({ 

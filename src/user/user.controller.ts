@@ -10,17 +10,25 @@ import {
   } from '@nestjs/common';
   import { UserService } from './user.service';
   import { CreateUserDto } from './dto/create-user.dto';
-  import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+  import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
   
   @ApiTags('user')
   @Controller('user')
   export class UserController {
     constructor(private readonly userService: UserService) {}
+
     @ApiOperation({ summary: 'Create User' })
     @Post()
     @UsePipes(new ValidationPipe())
-    @ApiResponse({ status: HttpStatus.CREATED, description: 'User created successfully' })
-    @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request' })
+    @ApiBody({ type: CreateUserDto, description: 'User data to create a new user' })
+    @ApiResponse({ 
+      status: HttpStatus.CREATED,
+      description: 'User created successfully',
+      })
+    @ApiResponse({ 
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Bad Request' 
+     })
     async create(@Body() createUserDto: CreateUserDto) {
       try {
         const result = await this.userService.create(createUserDto);

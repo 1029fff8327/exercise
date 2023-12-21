@@ -5,6 +5,7 @@ import { RedisModule, RedisModuleOptions } from '@liaoliaots/nestjs-redis';
 import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { User } from './user/user.model';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { UserModule } from './user/user.module';
         password: configService.get('POSTGRES_PASSWORD'),
         database: configService.get('POSTGRES_DB'),
         synchronize: true,
-        entities: [__dirname + '/**/*.entity{.js,.ts}'],
+        entities: [User],
       }),
       inject: [ConfigService],
     }),
