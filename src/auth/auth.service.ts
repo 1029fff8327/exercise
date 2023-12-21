@@ -51,7 +51,7 @@ export class AuthService {
     async someMethod(): Promise<void> {
       try {
         // Fetch the user from the UserService or wherever you get it
-        const userId = 'exampleUserId'; // Replace with the actual user ID
+        const userId = 'exampleUserId'; // Заменить на фактический идентификатор пользователя ID
         const user: User | undefined = await this.userService.findById(userId);
   
         // Now TypeScript knows the structure of the user object
@@ -60,12 +60,12 @@ export class AuthService {
           // Your logic here
           console.log(user.email); // Example usage
         } else {
-          throw new BadRequestException('User not found');
+          throw new BadRequestException('Пользователь не найден');
         }
       } catch (error) {
         // Handle the error
-        console.error('Error in someMethod:', error);
-        throw new BadRequestException('Failed to perform someMethod');
+        console.error('Пользователь не найден:', error);
+        throw new BadRequestException('Не удалось выполнить какой-либо метод');
       }
     }
   
@@ -122,7 +122,7 @@ export class AuthService {
   generateRefreshToken(user: IUser): string {
     const { id, email } = user;
     if (!id || !email) {
-      throw new BadRequestException('Invalid user data for refresh token generation');
+      throw new BadRequestException('Недопустимые пользовательские данные для генерации токена обновления');
     }
   
     return this.jwtService.sign({ id, email }, { expiresIn: this.configService.get<number>('JWT_REFRESH_EXPIRATION_TIME') });
@@ -143,8 +143,8 @@ export class AuthService {
         // Return the user with the refreshed access token
         return user as IUser;
       } catch (error) {
-        console.error('Failed to refresh access token:', error);
-        throw new BadRequestException('Failed to refresh access token');
+        console.error('Не удалось обновить токен доступа:', error);
+        throw new BadRequestException('Не удалось обновить refresh access token');
       }
     }
   
@@ -173,7 +173,7 @@ export class AuthService {
       const user = await this.userService.findByEmail(email);
   
       if (!user || !(await this.userService.checkPassword(user, password))) {
-        throw new BadRequestException('Invalid credentials');
+        throw new BadRequestException('Неверные учетные данные');
       }
   
       const payload: IUser = {
@@ -244,17 +244,17 @@ export class AuthService {
       const user = await this.userService.findByEmail(decodedToken.email);
 
       if (!user) {
-        throw new BadRequestException('Invalid activation token');
+        throw new BadRequestException('Недействительный токен активации');
       }
 
       if (user.isActivated) {
-        throw new BadRequestException('Account is already activated');
+        throw new BadRequestException('Учетная запись уже активирована');
       }
 
       await this.userService.updateUserActivation(user.id, true);
 
     } catch (error) {
-      throw new BadRequestException('Invalid activation token');
+      throw new BadRequestException('Недействительный токен активации');
     }
   }
 

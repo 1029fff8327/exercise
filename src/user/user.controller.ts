@@ -20,10 +20,10 @@ import {
     @ApiOperation({ summary: 'Create User' })
     @Post()
     @UsePipes(new ValidationPipe())
-    @ApiBody({ type: CreateUserDto, description: 'User data to create a new user' })
+    @ApiBody({ type: CreateUserDto, description: 'Пользовательские данные для создания нового пользователя' })
     @ApiResponse({ 
       status: HttpStatus.CREATED,
-      description: 'User created successfully',
+      description: 'Пользователь успешно создан',
       })
     @ApiResponse({ 
       status: HttpStatus.BAD_REQUEST,
@@ -33,7 +33,7 @@ import {
       try {
         const result = await this.userService.create(createUserDto);
         return {
-          message: 'User created successfully',
+          message: 'Пользователь успешно создан',
           user: result.user,
           refreshToken: result.refreshToken,
         };
@@ -43,7 +43,7 @@ import {
           throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
         }
        
-        throw new HttpException({ message: 'Internal Server Error' }, HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException({ message: 'Внутренняя ошибка сервера' }, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }

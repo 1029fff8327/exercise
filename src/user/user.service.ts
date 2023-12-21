@@ -132,32 +132,29 @@ generateRefreshToken(user: User): string {
       const user = await this.userRepository.findOne({ where: { id: userId } });
       return user;
     } catch (error) {
-      console.error('Error in findById:', error);
-      throw new BadRequestException('Failed to find user by ID');
+      console.error('Ошибка при поиске по ID:', error);
+      throw new BadRequestException('Не удалось найти пользователя по ID');
     }
   }
 
   async checkPassword(user: User, password: string): Promise<boolean> {
     try {
-      // Сравниваем хэшированный пароль из базы данных с введенным паролем
       const isPasswordValid = await argon2.verify(user.password, password);
 
       return isPasswordValid;
     } catch (error) {
-      // Обработка ошибок
+      
       return false;
     }
   }
 
   async updateUser(userId: string, updatedData: Partial<User>): Promise<void> {
     try {
-      // Проверка, существует ли пользователь с указанным ID
       const existingUser = await this.userRepository.findOne({ where: { id: userId } });
       if (!existingUser) {
-        throw new BadRequestException('User not found');
+        throw new BadRequestException('Пользователь не найден');
       }
 
-      // Обновление данных пользователя
       if (updatedData.email) {
         existingUser.email = updatedData.email;
       }
@@ -166,12 +163,9 @@ generateRefreshToken(user: User): string {
         existingUser.password = updatedData.password;
       }
 
-
-      // Сохранение обновленного пользователя в базе данных
       await this.userRepository.save(existingUser);
     } catch (error) {
-      // Обработка ошибок при обновлении пользователя
-      throw new BadRequestException('Failed to update user');
+      throw new BadRequestException('Не удалось обновить пользователя');
     }
   }
 

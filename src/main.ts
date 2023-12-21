@@ -17,8 +17,8 @@ async function bootstrap() {
   );
  
   const config = new DocumentBuilder()
-    .setTitle("Lesson api")
-    .setDescription("This api for lesson") 
+    .setTitle("api")
+    .setDescription("") 
     .setVersion("1.0")
     .addTag('API')
     .build();

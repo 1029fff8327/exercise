@@ -27,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // Check if the token has expired
       const now = Math.floor(Date.now() / 1000);
       if (exp && now > exp) {
-        throw new UnauthorizedException('Token has expired');
+        throw new UnauthorizedException('Срок действия токена истек');
       }
 
       // You can also check if the token is close to expiration and refresh it
@@ -55,7 +55,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       return { ...sanitizedUser, refreshToken: typedRefreshToken, accessToken };
     } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('Недопустимый токен');
     }
   }
 

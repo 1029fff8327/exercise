@@ -24,10 +24,10 @@ import {
     constructor(private readonly authService: AuthService) {}
   
   @Post('login')
-  @ApiOperation({ summary: 'Login to the application' })
+  @ApiOperation({ summary: 'Войдите в приложение' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
-    description: 'User successfully logged in',
+    description: 'Пользователь успешно вошел в систему',
     // Добавляем пример успешного ответа
     schema: {
       properties: {
@@ -37,7 +37,7 @@ import {
       },
     },
   })
-  @ApiBadRequestResponse({ description: 'Invalid login credentials' })
+  @ApiBadRequestResponse({ description: 'Неверные учетные данные для входа в систему' })
   async login(@Body() loginDto: LoginDto): Promise<any> {
     try {
       const result = await this.authService.login(loginDto.email, loginDto.password);
@@ -50,19 +50,18 @@ import {
     } catch (error) {
       // Обрабатываем ошибку и возвращаем соответствующий HTTP-статус
       throw new HttpException(
-        { status: HttpStatus.BAD_REQUEST, error: 'Invalid login credentials' },
+        { status: HttpStatus.BAD_REQUEST, error: 'Неверные учетные данные для входа в систему' },
         HttpStatus.BAD_REQUEST,
       );
     }
   }
 
- 
+  @Get('profile')
   @ApiOperation({ summary: 'Get Profile' })
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
   @ApiBearerAuth()
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiOkResponse({ status: 200, description: 'User profile retrieved successfully', type: Object })
+  @ApiResponse({ status: 401, description: 'Неавторизованный' })
+  @ApiOkResponse({ status: 200, description: 'Профиль пользователя успешно восстановлен', type: Object })
   async getProfile(@Request() req): Promise<{ id: string; email: string }> {
     try {
       const user = req.user;
@@ -74,41 +73,41 @@ import {
 
       return profileData;
     } catch (error) {
-      throw new UnauthorizedException('Failed to retrieve profile');
+      throw new UnauthorizedException('Не удалось получить профиль');
     }
   }
 
-  @ApiOperation({ summary: 'Reset Password' })
-  @ApiOkResponse({ status: 200, description: 'Password reset email sent successfully', type: Object })
-  @ApiBadRequestResponse({ status: 400, description: 'Failed to send password reset email' })
   @Post('reset-password')
+  @ApiOperation({ summary: 'сброс пароля' })
+  @ApiOkResponse({ status: 200, description: 'Электронное письмо для сброса пароля отправлено успешно', type: Object })
+  @ApiBadRequestResponse({ status: 400, description: 'Не удалось отправить электронное письмо для сброса пароля' })
   async requestPasswordReset(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
     try {
       await this.authService.requestPasswordReset(resetPasswordDto.email);
 
-      return { message: 'Password reset email sent successfully' };
+      return { message: 'Электронное письмо для сброса пароля отправлено успешно' };
     } catch (error) {
-      throw new BadRequestException('Failed to send password reset email');
+      throw new BadRequestException('Не удалось отправить электронное письмо для сброса пароля');
     }
   }
 
-  @ApiOperation({ summary: 'Activate Account' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Account activated successfully' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid activation token' })
   @Get('activate-account')
+  @ApiOperation({ summary: 'Активировать учетную запись' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Учетная запись успешно активирована' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Недействительный токен активации' })
   async activateAccount(@Query('token') token: string): Promise<{ message: string }> {
     try {
       await this.authService.activateAccount(token);
-      return { message: 'Account activated successfully' };
+      return { message: 'Учетная запись успешно активирована' };
     } catch (error) {
-      throw new BadRequestException('Invalid activation token');
+      throw new BadRequestException('Недействительный токен активации');
     }
   }
 
-  @ApiOperation({ summary: 'Reset Password Confirm' })
-  @ApiOkResponse({ status: 200, description: 'Password reset successfully', type: Object })
-  @ApiBadRequestResponse({ status: 400, description: 'Failed to reset password' })
   @Post('reset-password-confirm')
+  @ApiOperation({ summary: 'Сброс пароля подтвердите' })
+  @ApiOkResponse({ status: 200, description: 'Успешный сброс пароля', type: Object })
+  @ApiBadRequestResponse({ status: 400, description: 'Не удалось сбросить пароль' })
     async resetPassword(@Body() resetPasswordConfirmDto: ResetPasswordConfirmDto): Promise<{ message: string }> {
       try {
         await this.authService.resetPassword(
@@ -116,9 +115,9 @@ import {
           resetPasswordConfirmDto.newPassword,
         );
 
-        return { message: 'Password reset successfully' };
+        return { message: 'Успешный сброс пароля' };
       } catch (error) {
-        throw new BadRequestException('Failed to reset password');
+        throw new BadRequestException('Не удалось сбросить пароль');
       }
     }
   }
