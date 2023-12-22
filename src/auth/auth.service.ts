@@ -1,9 +1,5 @@
 import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnauthorizedException,
+  BadRequestException, Injectable
  } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as argon2 from "argon2";
@@ -13,8 +9,7 @@ import { MailService } from 'src/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/user/user.model';
 import { Repository } from 'typeorm';
-import { RedisService } from '@liaoliaots/nestjs-redis';
-import { LoginDto } from './dto/Login.dto';
+import { RedisService } from '@liaoliaots/nestjs-redis';  
 
 @Injectable()
 export class AuthService {

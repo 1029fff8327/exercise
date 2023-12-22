@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException} from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.model';
@@ -19,42 +19,58 @@ export class UserService {
     private readonly mailService: MailService,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<{ user: User; refreshToken: string; accessToken: string }> {
     try {
-      const existUser = await this.userRepository.findOne({
-        where: {
-          email: createUserDto.email,
-        },
-      });
+      await this.validateUserDoesNotExist(createUserDto.email);
 
-      if (existUser) {
-        throw new BadRequestException('Этот электронный адрес уже существует');
-      }
-
-      const { user, refreshToken, accessToken } = await this.saveUser(createUserDto);
+      const user = await this.saveUser(createUserDto);
+      const { refreshToken, accessToken } = this.generateTokens(user);
 
       return { user, refreshToken, accessToken };
     } catch (error) {
-      console.error('Ошибка при создании пользователя:', error);
-      throw new InternalServerErrorException('Внутренняя ошибка сервера');
+      console.error('Error creating user:', error);
+      this.handleCreateUserError(error);
     }
   }
 
-  async saveUser(createUserDto: CreateUserDto): Promise<{ user: User; refreshToken: string; accessToken: string }> {
+  private async validateUserDoesNotExist(email: string): Promise<void> {
+    const existingUser = await this.userRepository.findOne({ where: { email } });
+
+    if (existingUser) {
+      throw new BadRequestException('This email address already exists');
+    }
+  }
+
+  private async saveUser(createUserDto: CreateUserDto): Promise<User> {
     const user = await this.userRepository.save({
       email: createUserDto.email,
       password: await argon2.hash(createUserDto.password),
       activationToken: this.generateActivationToken(),
     });
 
-    user.refreshToken = this.authService.generateRefreshToken(user);
-    user.accessToken = this.generateAccessToken(user);
-
-    await this.userRepository.save(user);
-
-    const refreshToken = this.jwtService.sign({ email: createUserDto.email });
-    return { user, refreshToken, accessToken: user.accessToken };
+    return user;
   }
+
+  private generateTokens(user: User): { refreshToken: string; accessToken: string } {
+    const refreshToken = this.authService.generateRefreshToken(user);
+    const accessToken = this.generateAccessToken(user);
+
+    user.refreshToken = refreshToken;
+    user.accessToken = accessToken;
+
+    this.userRepository.save(user);
+
+    return { refreshToken, accessToken };
+  }
+
+  private handleCreateUserError(error: any): void {
+    if (error instanceof BadRequestException) {
+      throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
+    }
+
+    throw new HttpException({ message: 'Internal server error while creating user' }, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+  
 
   generateActivationToken(): string {
     const crypto = require('crypto');

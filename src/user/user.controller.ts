@@ -17,33 +17,36 @@ import {
   export class UserController {
     constructor(private readonly userService: UserService) {}
 
-    @ApiOperation({ summary: 'Create User' })
-    @Post()
-    @UsePipes(new ValidationPipe())
-    @ApiBody({ type: CreateUserDto, description: 'Пользовательские данные для создания нового пользователя' })
-    @ApiResponse({ 
-      status: HttpStatus.CREATED,
-      description: 'Пользователь успешно создан',
-      })
-    @ApiResponse({ 
-      status: HttpStatus.BAD_REQUEST,
-      description: 'Bad Request' 
-     })
-    async create(@Body() createUserDto: CreateUserDto) {
-      try {
-        const result = await this.userService.create(createUserDto);
-        return {
-          message: 'Пользователь успешно создан',
-          user: result.user,
-          refreshToken: result.refreshToken,
-        };
-      } catch (error) {
-        
-        if (error instanceof BadRequestException) {
-          throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
-        }
-       
-        throw new HttpException({ message: 'Внутренняя ошибка сервера' }, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
+  @ApiOperation({ summary: 'Create User' })
+  @Post()
+  @UsePipes(new ValidationPipe())
+  @ApiBody({ type: CreateUserDto, description: 'Пользовательские данные для создания нового пользователя' })
+  @ApiResponse({ 
+    status: HttpStatus.CREATED,
+    description: 'Пользователь успешно создан',
+  })
+  @ApiResponse({ 
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Bad Request' 
+  })
+  async create(@Body() createUserDto: CreateUserDto) {
+    try {
+      const result = await this.userService.create(createUserDto);
+      return {
+        message: 'Пользователь успешно создан',
+        user: result.user,
+        refreshToken: result.refreshToken,
+      };
+    } catch (error) {
+      this.handleCreateUserError(error);
     }
   }
+
+  private handleCreateUserError(error: any): void {
+    if (error instanceof BadRequestException) {
+      throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
+    }
+
+    throw new HttpException({ message: 'Внутренняя ошибка сервера' }, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+}
