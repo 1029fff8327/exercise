@@ -26,6 +26,8 @@ export class UserService {
       const user = await this.saveUser(createUserDto);
       const { refreshToken, accessToken } = this.generateTokens(user);
 
+      await this.sendActivationEmail(user);
+
       return { user, refreshToken, accessToken };
     } catch (error) {
       console.error('Error creating user:', error);
