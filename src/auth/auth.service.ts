@@ -190,7 +190,10 @@ export class AuthService {
         expiresIn,
       };
     }
-    
+     
+    async sendActivationEmail(user: User): Promise<void> {
+      await this.mailService.sendActivationEmail(user);
+    }
 
     async removeResetToken(user: User): Promise<void> {
       try {
@@ -205,7 +208,7 @@ export class AuthService {
       { id: user.id, email: user.email },
       { expiresIn: '1d' }, 
     );
-    await this.mailService.sendActivationEmail(user.email, activationToken);
+    await this.mailService.sendActivationEmail({ email: user.email, activationToken });
 
     return activationToken;
   }

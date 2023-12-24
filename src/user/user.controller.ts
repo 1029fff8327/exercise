@@ -42,11 +42,11 @@ import {
     }
   }
 
-  private handleCreateUserError(error: any): void {
+  private handleCreateUserError(error: any): never {
     if (error instanceof BadRequestException) {
       throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
     }
-
-    throw new HttpException({ message: 'Внутренняя ошибка сервера' }, HttpStatus.INTERNAL_SERVER_ERROR);
+  
+    throw new HttpException({ message: 'Внутренняя ошибка сервера при создании пользователя' }, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

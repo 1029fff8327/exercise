@@ -10,7 +10,7 @@ import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UserService {
-  private readonly authService: AuthService;
+  public readonly authService: AuthService;
   user: any;
   constructor(
     @InjectRepository(User) 
@@ -26,7 +26,7 @@ export class UserService {
       const user = await this.saveUser(createUserDto);
       const { refreshToken, accessToken } = this.generateTokens(user);
 
-      await this.sendActivationEmail(user);
+      await this.authService.sendActivationEmail(user);
 
       return { user, refreshToken, accessToken };
     } catch (error) {

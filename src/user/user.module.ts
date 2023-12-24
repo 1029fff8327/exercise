@@ -8,6 +8,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { MailModule } from 'src/mail/mail.module';  
 import { MailService } from 'src/mail/mail.service';
 import { AuthModule } from 'src/auth/auth.module';
+import { AuthService } from 'src/auth/auth.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AuthModule } from 'src/auth/auth.module';
     UserService,
     JwtService,
     MailService,
+    AuthService
   ],
   exports: [UserService, TypeOrmModule],
 })
