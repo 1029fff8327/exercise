@@ -38,6 +38,8 @@ export class AuthService {
 
     await this.mailService.sendMail(
       user.email,
+      "Запрос на сброс пароля",
+      `Чтобы сбросить свой пароль, перейдите по следующей ссылке: http://your-frontend-url/reset-password?token=${resetToken}`,
      );
     }
 
@@ -77,6 +79,8 @@ export class AuthService {
   
         await this.mailService.sendMail(
           user.email,
+          "Сброс пароля завершен успешно",
+          "Ваш пароль был успешно сброшен",
         );
       } catch (error) {
         console.error('Ошибка сброса пароля:', error);
@@ -186,6 +190,10 @@ export class AuthService {
         expiresIn,
       };
     }
+     
+    async sendActivationEmail(user: User): Promise<void> {
+      await this.mailService.sendActivationEmail(user);
+    }
 
     async removeResetToken(user: User): Promise<void> {
       try {
@@ -200,7 +208,7 @@ export class AuthService {
       { id: user.id, email: user.email },
       { expiresIn: '1d' }, 
     );
-    await this.mailService.sendActivationEmail(user.email, activationToken);
+    await this.mailService.sendActivationEmail({ email: user.email, activationToken });
 
     return activationToken;
   }

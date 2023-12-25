@@ -1,53 +1,76 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { SentMessageInfo } from 'nodemailer';
+import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { MailConfigService } from './mail.config.service';
+import { User } from '../user/user.model';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MailService {
-  private readonly _logger = new Logger(MailService.name);
+  private transporter: nodemailer.Transporter;
+  
+  constructor(private readonly configService: ConfigService) {
+    // Initialize the transporter in the constructor
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+          host: this.configService.get<string>('EMAIL_HOST'),
+          port: this.configService.get<number>('EMAIL_PORT'),
+          secure: this.configService.get<boolean>('EMAIL_SECURE'),
+          auth: {
+            user: this.configService.get<string>('EMAIL_USERNAME'),
+            pass: this.configService.get<string>('EMAIL_PASSWORD'),
+          },
+        },
+        defaults: {
+          from: this.configService.get<string>('EMAIL_FROM'),
+        },
+        template: {
+          dir: __dirname + '../../../../../core/mail/templates',
+          options: {
+            strict: true,
+          },
+        });
+      };
 
-  constructor(private readonly mailConfig: MailConfigService) {}
+  async sendActivationEmail(data: { email: string, activationToken: string }): Promise<void> {
+    const activationLink = `http://your-frontend-url/activate-account?token=${data.activationToken}`;
+    const subject = 'Activation Email';
+    const text = `Click the following link to activate your account: ${activationLink}`;
+  
+    const email = data.email;
 
-  async send(config): Promise<SentMessageInfo> {
+    const mailOptions = {
+      from: 'your-email@example.com', // Set your email address
+      to: email,
+      subject: 'Activate Your Account',
+      text: `Click the following link to activate your account: ${activationLink}`,
+    };
+
     try {
-      return await this.sendMail(config);
-    } catch (error) {
-      this._logger.error(error, error.stack);
-      throw new InternalServerErrorException(error);
-    }
-  }
-
-  async sendMail(config): Promise<SentMessageInfo> {
-    try {
-      const { transport, defaults } = this.mailConfig.getTransportGmail();
-      const transporter = nodemailer.createTransport(transport, defaults);
-      return transporter.sendMail(config);
-    } catch (error) {
-      console.error('Error sending email:', error);
-      this._logger.error(error, error.stack);
-      throw new InternalServerErrorException('Error sending email');
-    }
-  }
-
-  async sendActivationEmail(to: string, activationToken: string): Promise<void> {
-    const subject = 'Активация учетной записи';
-    const text = `Для активации вашей учетной записи перейдите по ссылке: http://your-frontend-url/activate-account?token=${activationToken}`;
-
-    try {
-      const { transport, defaults } = this.mailConfig.getTransportGmail();
-      const transporter = nodemailer.createTransport(transport, defaults);
-
-      await transporter.sendMail({
-        from: 'your-email@gmail.com', // Update with your email
-        to,
-        subject,
-        text,
-      });
+      await this.transporter.sendMail(mailOptions);
+      console.log('Activation email sent successfully.');
     } catch (error) {
       console.error('Error sending activation email:', error);
-      this._logger.error(error, error.stack);
-      throw new InternalServerErrorException('Error sending activation email');
+      // Handle the error, you might want to throw an exception or log it
     }
+  }
+
+  // Method to send reset token email
+  async sendResetTokenEmail(user: User, resetToken: string): Promise<void> {
+    const resetLink = `http://your-frontend-url/reset-password?token=${resetToken}`;
+    const subject = 'Сброс пароля';
+    const text = `Для сброса пароля перейдите по ссылке: ${resetLink}`;
+
+    await this.sendMail(user.email, subject, text);
+  }
+
+  // Generic method to send mail
+  async sendMail(to: string, subject: string, text: string): Promise<void> {
+    const mailOptions = {
+      from: 'your-email@example.com',
+      to,
+      subject,
+      text,
+    };
+
+    await this.transporter.sendMail(mailOptions);
   }
 }

@@ -26,8 +26,7 @@ export class UserService {
       const user = await this.saveUser(createUserDto);
       const { refreshToken, accessToken } = this.generateTokens(user);
 
-      await this.mailService.sendActivationEmail(user.email, user.activationToken);
-
+      await this.authService.sendActivationEmail(user);
 
       return { user, refreshToken, accessToken };
     } catch (error) {
