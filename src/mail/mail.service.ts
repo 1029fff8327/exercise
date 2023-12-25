@@ -3,32 +3,23 @@ import * as nodemailer from 'nodemailer';
 import { User } from '../user/user.model';
 import { ConfigService } from '@nestjs/config';
 
+
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
-  
+
   constructor(private readonly configService: ConfigService) {
-    // Initialize the transporter in the constructor
+
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
-          host: this.configService.get<string>('EMAIL_HOST'),
-          port: this.configService.get<number>('EMAIL_PORT'),
-          secure: this.configService.get<boolean>('EMAIL_SECURE'),
-          auth: {
-            user: this.configService.get<string>('EMAIL_USERNAME'),
-            pass: this.configService.get<string>('EMAIL_PASSWORD'),
-          },
-        },
-        defaults: {
-          from: this.configService.get<string>('EMAIL_FROM'),
-        },
-        template: {
-          dir: __dirname + '../../../../../core/mail/templates',
-          options: {
-            strict: true,
-          },
-        });
-      };
+      host: this.configService.get<string>('EMAIL_HOST'),
+      port: this.configService.get<number>('EMAIL_PORT'),
+      auth: {
+        user: this.configService.get<string>('EMAIL_USERNAME'),
+        pass: this.configService.get<string>('EMAIL_PASSWORD')
+      },
+    });
+  } 
 
   async sendActivationEmail(data: { email: string, activationToken: string }): Promise<void> {
     const activationLink = `http://your-frontend-url/activate-account?token=${data.activationToken}`;
@@ -38,7 +29,7 @@ export class MailService {
     const email = data.email;
 
     const mailOptions = {
-      from: 'your-email@example.com', // Set your email address
+      from: this.configService.get<string>('EMAIL_FROM'),
       to: email,
       subject: 'Activate Your Account',
       text: `Click the following link to activate your account: ${activationLink}`,
@@ -65,8 +56,8 @@ export class MailService {
   // Generic method to send mail
   async sendMail(to: string, subject: string, text: string): Promise<void> {
     const mailOptions = {
-      from: 'your-email@example.com',
-      to,
+      from: this.configService.get<string>('EMAIL_FROM'),
+      to: 
       subject,
       text,
     };

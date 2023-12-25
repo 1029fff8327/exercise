@@ -77,6 +77,19 @@ async getProfile(@Request() req): Promise<{ id: string; email: string }> {
   }
 }
 
+@Get('activate-account')
+@ApiOperation({ summary: 'Активировать учетную запись' })
+@ApiResponse({ status: HttpStatus.OK, description: 'Учетная запись успешно активирована' })
+@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Недействительный токен активации' })
+async activateAccount(@Query('token') token: string): Promise<{ message: string }> {
+  try {
+    await this.authService.activateAccount(token);
+    return { message: 'Учетная запись успешно активирована' };
+  } catch (error) {
+    throw new BadRequestException('Недействительный токен активации');
+  }
+}
+
 @Post('reset-password')
 @ApiOperation({ summary: 'сброс пароля' })
 @ApiOkResponse({ status: 200, description: 'Электронное письмо для сброса пароля отправлено успешно', type: Object })
@@ -88,19 +101,6 @@ async requestPasswordReset(@Body() resetPasswordDto: ResetPasswordDto): Promise<
     return { message: 'Электронное письмо для сброса пароля отправлено успешно' };
   } catch (error) {
     throw new BadRequestException('Не удалось отправить электронное письмо для сброса пароля');
-  }
-}
-
-@Get('activate-account')
-@ApiOperation({ summary: 'Активировать учетную запись' })
-@ApiResponse({ status: HttpStatus.OK, description: 'Учетная запись успешно активирована' })
-@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Недействительный токен активации' })
-async activateAccount(@Query('token') token: string): Promise<{ message: string }> {
-  try {
-    await this.authService.activateAccount(token);
-    return { message: 'Учетная запись успешно активирована' };
-  } catch (error) {
-    throw new BadRequestException('Недействительный токен активации');
   }
 }
 
