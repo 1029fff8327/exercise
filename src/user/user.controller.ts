@@ -16,37 +16,47 @@ import {
   @Controller('user')
   export class UserController {
     constructor(private readonly userService: UserService) {}
-
-  @ApiOperation({ summary: 'Create User' })
-  @Post()
-  @UsePipes(new ValidationPipe())
-  @ApiBody({ type: CreateUserDto, description: 'Пользовательские данные для создания нового пользователя' })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED,
-    description: 'Пользователь успешно создан',
-  })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Bad Request' 
-  })
-  async create(@Body() createUserDto: CreateUserDto) {
-    try {
-      const result = await this.userService.create(createUserDto);
-      return {
-        message: 'Пользователь успешно создан',
-        user: result.user,
-        refreshToken: result.refreshToken,
-      };
-    } catch (error) {
-      this.handleCreateUserError(error);
-    }
-  }
-
-  private handleCreateUserError(error: any): never {
-    if (error instanceof BadRequestException) {
-      throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
-    }
+    @ApiOperation({ summary: 'Create User' })
+    @Post()
+    @UsePipes(new ValidationPipe())
+    @ApiBody({
+      type: CreateUserDto,
+      description: 'Пользовательские данные для создания нового пользователя',
+    })
+    @ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Пользователь успешно создан',
+    })
+    @ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Bad Request',
+    })
+    async create(@Body() createUserDto: CreateUserDto) {
+      try {
+        // Attempt to create the user
+        const result = await this.userService.create(createUserDto);
   
-    throw new HttpException({ message: 'Внутренняя ошибка сервера при создании пользователя' }, HttpStatus.INTERNAL_SERVER_ERROR);
+        // If successful, send a success response
+        return {
+          message: 'Пользователь успешно создан',
+          user: result.user,
+          refreshToken: result.refreshToken,
+        };
+      } catch (error) {
+        // If an error occurs, handle it appropriately
+        if (error instanceof BadRequestException) {
+          // If it's a known validation error, send a 400 Bad Request response
+          return {
+            message: error.message,
+          };
+        } else {
+          // If it's an unknown error, log it and send a 500 Internal Server Error response
+          console.error('Error creating user:', error);
+  
+          return {
+            message: 'Внутренняя ошибка сервера',
+          };
+        }
+      }
+    }
   }
-}
