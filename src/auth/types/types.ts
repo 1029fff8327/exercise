@@ -6,7 +6,7 @@ export interface IUser {
   activationToken?: string | null;
   refreshToken?: string | null;
   accessToken?: string | null;
-  expiresIn?: string;
+  expiresIn?: number;
   exp?: number; 
   iat?: number; 
   createdAt: Date;

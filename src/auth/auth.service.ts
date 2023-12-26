@@ -183,8 +183,8 @@ export class AuthService {
   
       const accessToken = this.jwtService.sign(payload);
       const refreshToken = this.userService.generateRefreshToken(user);
-      const expiresIn = 'your-expires-in-value'; // Set your desired expiration time
-  
+      const expiresIn = 3600; 
+
       return {
         accessToken,
         refreshToken,
