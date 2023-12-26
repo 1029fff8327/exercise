@@ -6,7 +6,6 @@ import { Repository } from 'typeorm';
 import * as argon2 from "argon2";
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/mail.service';
-import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()
@@ -17,8 +16,6 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
-    private readonly configService: ConfigService,
-
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<{ user: User}> {

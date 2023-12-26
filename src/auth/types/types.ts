@@ -1,7 +1,6 @@
 export interface IUser {
   id: string;
   email: string;
-  password: string;
   isActivated: boolean;
   resetToken?: string | null;
   activationToken?: string | null;

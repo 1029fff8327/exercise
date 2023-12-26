@@ -179,7 +179,6 @@ export class AuthService {
         isActivated: user.isActivated,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
-        password: user.password, 
       };
   
       const accessToken = this.jwtService.sign(payload);
