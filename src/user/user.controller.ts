@@ -35,7 +35,6 @@ export class UserController {
       return {
         message: 'Пользователь успешно создан',
         user: result.user,
-        refreshToken: result.refreshToken,
       };
     } catch (error) {
       this.handleCreateUserError(error);

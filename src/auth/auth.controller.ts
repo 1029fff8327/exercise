@@ -28,7 +28,7 @@ export class AuthController {
 @ApiResponse({ 
   status: HttpStatus.OK, 
   description: 'Пользователь успешно вошел в систему',
-  // Добавляем пример успешного ответа
+  
   schema: {
     properties: {
       accessToken: { type: 'string' },
@@ -41,7 +41,7 @@ export class AuthController {
 async login(@Body() loginDto: LoginDto): Promise<any> {
   try {
     const result = await this.authService.login(loginDto.email, loginDto.password);
-    // Возвращаем успешный ответ с токенами
+    
     return {
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,

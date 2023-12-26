@@ -21,16 +21,13 @@ export class UserService {
 
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<{ user: User; refreshToken: string; accessToken: string }> {
+  async create(createUserDto: CreateUserDto): Promise<{ user: User}> {
     try {
       await this.validateUserDoesNotExist(createUserDto.email);
   
       const user = await this.saveUser(createUserDto);
-      const tokens = await this.generateTokens(user); 
   
-      await this.mailService.sendActivationEmail(user);;
-  
-      return { user, ...tokens };
+      return { user };
     } catch (error) {
       console.error('Error creating user:', error);
       this.handleCreateUserError(error);
