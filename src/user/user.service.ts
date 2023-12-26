@@ -43,7 +43,7 @@ export class UserService {
     const user = await this.userRepository.save({
       email: createUserDto.email,
       password: await argon2.hash(createUserDto.password),
-      activationToken: this.generateActivationToken(),
+
     });
 
     return user;
@@ -52,9 +52,14 @@ export class UserService {
   private async generateTokens(user: User): Promise<{ refreshToken: string; accessToken: string }> {
     const refreshToken = this.generateRefreshToken(user);
     const accessToken = this.generateAccessToken(user);
+
+    const activationToken = this.generateActivationToken(user);
+    console.log('Activation Token:', activationToken);
   
     user.refreshToken = refreshToken;
     user.accessToken = accessToken;
+    user.activationToken = activationToken;
+
   
     await this.userRepository.save(user);
   
@@ -69,11 +74,24 @@ export class UserService {
     throw new HttpException({ message: 'Internal server error while creating user' }, HttpStatus.INTERNAL_SERVER_ERROR);
   }
   
-  generateActivationToken(): string {
-    const crypto = require('crypto');
+  generateActivationToken(user: User): string {
+    const payload = { sub: user.id, email: user.email };
+    const options = {
+      expiresIn: '1h',
+    };
 
-    return crypto.randomBytes(32).toString('hex'); 
+    return this.jwtService.sign(payload, options); 
   }
+
+  verifyActivationToken(token: string): any {
+    try {
+      return this.jwtService.verify(token);
+    } catch (error) {
+      console.error('Error verifying activation token:', error);
+      throw new BadRequestException('Недействительный токен активации');
+    }
+  }
+
 
   async sendActivationEmail(user: User): Promise<void> {
     const activationLink = `http://your-frontend-url/activate-account?token=${user.activationToken}`;

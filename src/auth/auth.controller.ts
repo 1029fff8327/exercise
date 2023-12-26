@@ -17,11 +17,16 @@ import { ResetPasswordDto } from './reset/reset-password.dto';
 import { ResetPasswordConfirmDto } from './reset/reset-confirm-password.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 import { LoginDto } from './dto/Login.dto';
+import { ActivateAccountDto } from './dto/activate-account.dto';
+import { UserService } from 'src/user/user.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+    ) {}
 
 @Post('login')
 @ApiOperation({ summary: 'Войдите в приложение' })
@@ -45,6 +50,7 @@ async login(@Body() loginDto: LoginDto): Promise<any> {
     return {
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
+      activationToken: result.activationToken,
       expiresIn: result.expiresIn,
     };
   } catch (error) {
@@ -56,13 +62,28 @@ async login(@Body() loginDto: LoginDto): Promise<any> {
   }
 }
 
-@Get('activate-account')
+@ApiOperation({ summary: 'Activate Account' })
+@Post('activate-account')
 @ApiOperation({ summary: 'Активировать учетную запись' })
 @ApiResponse({ status: HttpStatus.OK, description: 'Учетная запись успешно активирована' })
 @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Недействительный токен активации' })
-async activateAccount(@Query('token') token: string): Promise<{ message: string }> {
+async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{ message: string }> {
   try {
+    const { token } = activateAccountDto;
+
+    // Log the received activation token
+    console.log('Received Activation Token:', token);
+
+    // Verify the activation token
+    const decodedToken = this.userService.verifyActivationToken(token);
+
+    // Log the decoded activation token
+    console.log('Decoded Activation Token:', decodedToken); 
+
+    // Rest of your activation logic
     await this.authService.activateAccount(token);
+
+    // Respond with a success message or any other relevant response
     return { message: 'Учетная запись успешно активирована' };
   } catch (error) {
     throw new BadRequestException('Недействительный токен активации');

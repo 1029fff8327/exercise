@@ -183,11 +183,13 @@ export class AuthService {
   
       const accessToken = this.jwtService.sign(payload);
       const refreshToken = this.userService.generateRefreshToken(user);
+      const activationToken = this.userService.generateActivationToken(user);
       const expiresIn = 3600; 
 
       return {
         accessToken,
         refreshToken,
+        activationToken, 
         expiresIn,
       };
     }
