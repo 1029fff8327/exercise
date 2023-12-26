@@ -87,19 +87,20 @@ export class UserService {
     try {
       return this.jwtService.verify(token);
     } catch (error) {
-      console.error('Error verifying activation token:', error);
+      console.error('Error verifying activation token:sendActivationEmail', error);
       throw new BadRequestException('Недействительный токен активации');
     }
   }
 
-
   async sendActivationEmail(user: User): Promise<void> {
-    const activationLink = `http://your-frontend-url/activate-account?token=${user.activationToken}`;
-    const subject = 'Активация учетной записи';
-    const text = `Для активации вашей учетной записи перейдите по ссылке: ${activationLink}`;
-  
+    const resetToken = await this.generateResetToken(user);
+    const resetLink = `http://your-frontend-url/reset-password-confirm?token=${resetToken}`;
+    const subject = 'Password Reset';
+    const text = `To reset your password, click the following link: ${resetLink}`;
+
     await this.mailService.sendMail(user.email, subject, text);
   }
+
 
 generateRefreshToken(user: User): string {
   const payload = { sub: 'refreshToken', userId: user.id }; 
@@ -121,14 +122,13 @@ generateRefreshToken(user: User): string {
   }
   
   async generateResetToken(user: User): Promise<string> {
-
-    const resetToken = 'generate_your_reset_token_logic_here';
     
+    const resetToken = 'generate_your_reset_token_logic_here';
+
     user.resetToken = resetToken;
     await this.userRepository.save(user);
 
     return resetToken;
-   
   }
 
   async verifyResetToken(resetToken: string): Promise<User | null> {

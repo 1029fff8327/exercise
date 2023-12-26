@@ -57,11 +57,18 @@ export class MailService {
   async sendMail(to: string, subject: string, text: string): Promise<void> {
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_FROM'),
-      to: 
-      subject,
-      text,
+      to: to,
+      subject: subject,
+      text: text,
     };
-
-    await this.transporter.sendMail(mailOptions);
+  
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log('Email sent successfully to:', to);
+    } catch (error) {
+      console.error('Error sending email to:', to);
+      console.error('Error details:', error);
+      // Handle the error, you might want to throw an exception or log it
+    }
   }
 }
