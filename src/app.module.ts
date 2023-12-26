@@ -6,6 +6,7 @@ import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { User } from './user/user.model';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -32,6 +33,13 @@ import { User } from './user/user.model';
           port: configService.get('REDIS_PORT'),
           password: configService.get('REDIS_PASSWORD'),
         },
+      }),
+      inject: [ConfigService],
+    }),
+    JwtModule.registerAsync({
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET'),
+        signOptions: { expiresIn: '1h' },
       }),
       inject: [ConfigService],
     }),

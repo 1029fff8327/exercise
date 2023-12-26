@@ -6,29 +6,31 @@ import { Repository } from 'typeorm';
 import * as argon2 from "argon2";
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/mail.service';
-import { AuthService } from 'src/auth/auth.service';
+import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class UserService {
-  public readonly authService: AuthService;
   user: any;
   constructor(
     @InjectRepository(User) 
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly configService: ConfigService,
+
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<{ user: User; refreshToken: string; accessToken: string }> {
     try {
       await this.validateUserDoesNotExist(createUserDto.email);
-
+  
       const user = await this.saveUser(createUserDto);
-      const { refreshToken, accessToken } = this.generateTokens(user);
-
-      await this.authService.sendActivationEmail(user);
-
-      return { user, refreshToken, accessToken };
+      const tokens = await this.generateTokens(user); 
+  
+      await this.mailService.sendActivationEmail(user);;
+  
+      return { user, ...tokens };
     } catch (error) {
       console.error('Error creating user:', error);
       this.handleCreateUserError(error);
@@ -53,15 +55,15 @@ export class UserService {
     return user;
   }
 
-  private generateTokens(user: User): { refreshToken: string; accessToken: string } {
-    const refreshToken = this.authService.generateRefreshToken(user);
+  private async generateTokens(user: User): Promise<{ refreshToken: string; accessToken: string }> {
+    const refreshToken = this.generateRefreshToken(user);
     const accessToken = this.generateAccessToken(user);
-
+  
     user.refreshToken = refreshToken;
     user.accessToken = accessToken;
-
-    this.userRepository.save(user);
-
+  
+    await this.userRepository.save(user);
+  
     return { refreshToken, accessToken };
   }
 
@@ -73,7 +75,6 @@ export class UserService {
     throw new HttpException({ message: 'Internal server error while creating user' }, HttpStatus.INTERNAL_SERVER_ERROR);
   }
   
-
   generateActivationToken(): string {
     const crypto = require('crypto');
 
@@ -93,8 +94,9 @@ generateRefreshToken(user: User): string {
   const options = {
     expiresIn: '7d', 
   };
+  const secret = process.env.JWT_SECRET;
 
-    return this.jwtService.sign(payload, options);
+  return jwt.sign(payload, secret, options);
   }
 
   generateAccessToken(user: User): string {
@@ -190,4 +192,4 @@ generateRefreshToken(user: User): string {
   async updateUserActivation(userId: string, isActivated: boolean): Promise<void> {
     await this.userRepository.update(userId, { isActivated });
   }
- }
+}

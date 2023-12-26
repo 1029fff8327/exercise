@@ -56,27 +56,6 @@ async login(@Body() loginDto: LoginDto): Promise<any> {
   }
 }
 
-@Get('profile')
-@ApiOperation({ summary: 'Get Profile' })
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
-@ApiResponse({ status: 401, description: 'Неавторизованный' })
-@ApiOkResponse({ status: 200, description: 'Профиль пользователя успешно восстановлен', type: Object })
-async getProfile(@Request() req): Promise<{ id: string; email: string }> {
-  try {
-    const user = req.user;
-
-    const profileData = {
-      id: user.id,
-      email: user.email,
-    };
-
-    return profileData;
-  } catch (error) {
-    throw new UnauthorizedException('Не удалось получить профиль');
-  }
-}
-
 @Get('activate-account')
 @ApiOperation({ summary: 'Активировать учетную запись' })
 @ApiResponse({ status: HttpStatus.OK, description: 'Учетная запись успешно активирована' })

@@ -10,13 +10,15 @@ import { ConfigService } from '@nestjs/config';
 import { User } from 'src/user/user.model';
 import { Repository } from 'typeorm';
 import { RedisService } from '@liaoliaots/nestjs-redis';  
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class AuthService {
   private readonly redisClient;
-  private readonly userRepository: Repository<User>;
 
  constructor(
+  @InjectRepository(User) 
+  private readonly userRepository: Repository<User>,
   private readonly userService: UserService,
   private readonly jwtService: JwtService,
   private readonly mailService: MailService,
@@ -123,7 +125,7 @@ export class AuthService {
     return this.jwtService.sign({ id, email }, { expiresIn: this.configService.get<number>('JWT_REFRESH_EXPIRATION_TIME') });
   }
 
-    async refreshAccessToken(user: IUser): Promise<IUser> {
+    async refreshAccessToken(user: IUser): Promise<IUser> {   
       try {
         // Generate a new access token
         const refreshedAccessToken = this.generateAccessToken(user);

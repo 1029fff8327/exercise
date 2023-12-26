@@ -6,9 +6,6 @@ import { User } from './user.model';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { MailModule } from 'src/mail/mail.module';  
-import { MailService } from 'src/mail/mail.service';
-import { AuthModule } from 'src/auth/auth.module';
-import { AuthService } from 'src/auth/auth.service';
 
 @Module({
   imports: [
@@ -20,16 +17,13 @@ import { AuthService } from 'src/auth/auth.service';
       }),
       inject: [ConfigService],
     }),
-    forwardRef(() => AuthModule),
-    forwardRef(() => MailModule), 
+    MailModule, 
     ConfigModule,
   ],
   controllers: [UserController],
   providers: [
     UserService,
     JwtService,
-    MailService,
-    AuthService
   ],
   exports: [UserService, TypeOrmModule],
 })
