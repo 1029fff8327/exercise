@@ -6,6 +6,7 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // TODO: config
   app.use(helmet({
       contentSecurityPolicy: {
         directives: {
@@ -15,10 +16,10 @@ async function bootstrap() {
       },
     })
   );
- 
+
   const config = new DocumentBuilder()
     .setTitle("api")
-    .setDescription("") 
+    .setDescription("")
     .setVersion("1.0")
     .addTag('API')
     .build();

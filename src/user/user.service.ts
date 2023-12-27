@@ -14,19 +14,19 @@ import { v4 as uuidv4 } from 'uuid';
 export class UserService {
   user: any;
   constructor(
-    @InjectRepository(User) 
+    @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly redisService: RedisService,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<{ user: User}> {
+  public async create(createUserDto: CreateUserDto): Promise<{ user: User}> {
     try {
       await this.validateUserDoesNotExist(createUserDto.email);
-  
+
       const user = await this.saveUser(createUserDto);
-  
+
       return { user };
     } catch (error) {
       console.error('Error creating user:', error);
@@ -59,14 +59,14 @@ export class UserService {
 
     throw new HttpException({ message: 'Internal server error while creating user' }, HttpStatus.INTERNAL_SERVER_ERROR);
   }
-  
+
   generateActivationToken(user: User): string {
     const payload = { sub: user.id, email: user.email };
     const options = {
       expiresIn: '1h',
     };
 
-    return this.jwtService.sign(payload, options); 
+    return this.jwtService.sign(payload, options);
   }
 
   verifyActivationToken(token: string): any {
@@ -84,7 +84,7 @@ export class UserService {
       const resetLink = `resetToken=${resetToken}`;
       const subject = 'Password Reset';
       const text = `To reset your password, click the following link: ${resetLink}`;
-  
+
       await this.mailService.sendMail(user.email, subject, text);
       console.log('Password reset email sent successfully.');
     } catch (error) {
@@ -95,58 +95,58 @@ export class UserService {
 
 
   generateRefreshToken(user: User): string {
-    const payload = { sub: 'refreshToken', userId: user.id }; 
+    const payload = { sub: 'refreshToken', userId: user.id };
     const options = {
-      expiresIn: '7d', 
+      expiresIn: '7d',
     };
-  
+
     const refresh_token = uuidv4();
-  
+
     this.redisService.getClient().set(refresh_token, user.id, 'EX', 604800);
-  
+
     return this.jwtService.sign(payload, options);
   }
-  
+
 
   generateAccessToken(user: User): string {
-    const payload = { sub: user.id, email: user.email }; 
+    const payload = { sub: user.id, email: user.email };
     const options = {
-      expiresIn: '1h', 
+      expiresIn: '1h',
     };
-  
+
     const access_token = uuidv4();
-  
+
     this.redisService.getClient().set(access_token, user.id, 'EX', 3600);
-  
+
     return this.jwtService.sign(payload, options);
   }
-  
+
   async generateResetToken(user: User): Promise<string> {
     const resetToken = uuidv4();
-  
+
     await this.redisService.getClient().set(resetToken, user.id, 'EX', 3600);
-  
+
     user.resetToken = resetToken;
     await this.userRepository.save(user);
-  
+
     return resetToken;
   }
 
   async verifyResetToken(resetToken: string): Promise<User | null> {
     const userId = await this.redisService.getClient().get(resetToken);
-  
+
     if (!userId) {
       throw new BadRequestException('Invalid or expired reset token');
     }
-  
+
     await this.redisService.getClient().del(resetToken);
-  
+
     const user = await this.userRepository.findOne({ where: { id: userId } });
-  
+
     if (!user) {
       throw new BadRequestException('User not found');
     }
-  
+
     return user;
   }
 
@@ -163,10 +163,10 @@ async removeResetToken(user: User): Promise<void> {
 
     await this.userRepository.save(user);
   }
-  
+
   async findByEmail(email: string) {
-    return await this.userRepository.findOne({ where: { 
-      email:email 
+    return await this.userRepository.findOne({ where: {
+      email:email
     } })
   }
 
@@ -186,7 +186,7 @@ async removeResetToken(user: User): Promise<void> {
 
       return isPasswordValid;
     } catch (error) {
-      
+
       return false;
     }
   }

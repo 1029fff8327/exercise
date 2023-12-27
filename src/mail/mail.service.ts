@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { User } from '../user/user.model';
 import { ConfigService } from '@nestjs/config';
+import { MailMapper } from './mappers/mail.mapper';
 
 
 @Injectable()
@@ -19,13 +20,13 @@ export class MailService {
         pass: this.configService.get<string>('EMAIL_PASSWORD')
       },
     });
-  } 
+  }
 
   async sendActivationEmail(data: { email: string, activationToken: string }): Promise<void> {
     const activationLink = `http://your-frontend-url/activate-account?token=${data.activationToken}`;
     const subject = 'Activation Email';
     const text = `Click the following link to activate your account: ${activationLink}`;
-  
+
     const email = data.email;
 
     const mailOptions = {
@@ -52,13 +53,13 @@ export class MailService {
   }
 
   async sendMail(to: string, subject: string, text: string): Promise<void> {
-    const mailOptions = {
+    const mailOptions = MailMapper.buildMailPayload({
       from: this.configService.get<string>('EMAIL_FROM'),
       to: to,
       subject: subject,
       text: text,
-    };
-  
+    });
+
     try {
       await this.transporter.sendMail(mailOptions);
       console.log('Email sent successfully to:', to);
