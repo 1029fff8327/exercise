@@ -7,6 +7,8 @@ import * as argon2 from "argon2";
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/mail.service';
 import * as jwt from 'jsonwebtoken';
+import { RedisService } from '@liaoliaots/nestjs-redis';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UserService {
@@ -16,6 +18,7 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly redisService: RedisService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<{ user: User}> {
@@ -49,23 +52,6 @@ export class UserService {
     return user;
   }
 
-  private async generateTokens(user: User): Promise<{ refreshToken: string; accessToken: string }> {
-    const refreshToken = this.generateRefreshToken(user);
-    const accessToken = this.generateAccessToken(user);
-
-    const activationToken = this.generateActivationToken(user);
-    console.log('Activation Token:', activationToken);
-  
-    user.refreshToken = refreshToken;
-    user.accessToken = accessToken;
-    user.activationToken = activationToken;
-
-  
-    await this.userRepository.save(user);
-  
-    return { refreshToken, accessToken };
-  }
-
   private handleCreateUserError(error: any): void {
     if (error instanceof BadRequestException) {
       throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
@@ -93,60 +79,85 @@ export class UserService {
   }
 
   async sendActivationEmail(user: User): Promise<void> {
-    const resetToken = await this.generateResetToken(user);
-    const resetLink = `http://your-frontend-url/reset-password-confirm?token=${resetToken}`;
-    const subject = 'Password Reset';
-    const text = `To reset your password, click the following link: ${resetLink}`;
-
-    await this.mailService.sendMail(user.email, subject, text);
+    try {
+      const resetToken = await this.generateResetToken(user);
+      const resetLink = `resetToken=${resetToken}`;
+      const subject = 'Password Reset';
+      const text = `To reset your password, click the following link: ${resetLink}`;
+  
+      await this.mailService.sendMail(user.email, subject, text);
+      console.log('Password reset email sent successfully.');
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw new InternalServerErrorException('Error sending password reset email');
+    }
   }
 
 
-generateRefreshToken(user: User): string {
-  const payload = { sub: 'refreshToken', userId: user.id }; 
-  const options = {
-    expiresIn: '7d', 
-  };
-  const secret = process.env.JWT_SECRET;
-
-  return jwt.sign(payload, secret, options);
+  generateRefreshToken(user: User): string {
+    const payload = { sub: 'refreshToken', userId: user.id }; 
+    const options = {
+      expiresIn: '7d', 
+    };
+  
+    const refresh_token = uuidv4();
+  
+    this.redisService.getClient().set(refresh_token, user.id, 'EX', 604800);
+  
+    return this.jwtService.sign(payload, options);
   }
+  
 
   generateAccessToken(user: User): string {
     const payload = { sub: user.id, email: user.email }; 
     const options = {
       expiresIn: '1h', 
     };
-
+  
+    const access_token = uuidv4();
+  
+    this.redisService.getClient().set(access_token, user.id, 'EX', 3600);
+  
     return this.jwtService.sign(payload, options);
   }
   
   async generateResetToken(user: User): Promise<string> {
-    
-    const resetToken = 'generate_your_reset_token_logic_here';
-
+    const resetToken = uuidv4();
+  
+    await this.redisService.getClient().set(resetToken, user.id, 'EX', 3600);
+  
     user.resetToken = resetToken;
     await this.userRepository.save(user);
-
+  
     return resetToken;
   }
 
   async verifyResetToken(resetToken: string): Promise<User | null> {
-
-    const user = await this.userRepository.findOne({ where: { resetToken } });
-
-    if (!user) {
-      throw new BadRequestException('Ошибка');
+    const userId = await this.redisService.getClient().get(resetToken);
+  
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired reset token');
     }
-
+  
+    await this.redisService.getClient().del(resetToken);
+  
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+  
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+  
     return user;
   }
 
-  async removeResetToken(user: User): Promise<void> {
-
-    user.resetToken = null;
-    await this.userRepository.save(user);
+async removeResetToken(user: User): Promise<void> {
+  if (user.resetToken) {
+    await this.redisService.getClient().del(user.resetToken);
   }
+
+  user.resetToken = null;
+  await this.userRepository.save(user);
+}
 
   async updatePassword(user: User): Promise<void> {
 

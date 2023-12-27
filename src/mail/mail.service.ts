@@ -40,11 +40,9 @@ export class MailService {
       console.log('Activation email sent successfully.');
     } catch (error) {
       console.error('Error sending activation email:', error);
-      // Handle the error, you might want to throw an exception or log it
     }
   }
 
-  // Method to send reset token email
   async sendResetTokenEmail(user: User, resetToken: string): Promise<void> {
     const resetLink = `http://your-frontend-url/reset-password?token=${resetToken}`;
     const subject = 'Сброс пароля';
@@ -53,7 +51,6 @@ export class MailService {
     await this.sendMail(user.email, subject, text);
   }
 
-  // Generic method to send mail
   async sendMail(to: string, subject: string, text: string): Promise<void> {
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_FROM'),
@@ -68,7 +65,6 @@ export class MailService {
     } catch (error) {
       console.error('Error sending email to:', to);
       console.error('Error details:', error);
-      // Handle the error, you might want to throw an exception or log it
     }
   }
 }

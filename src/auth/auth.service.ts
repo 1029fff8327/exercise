@@ -47,20 +47,15 @@ export class AuthService {
 
     async someMethod(): Promise<void> {
       try {
-        // Fetch the user from the UserService or wherever you get it
-        const userId = 'exampleUserId'; // Заменить на фактический идентификатор пользователя ID
+        const userId = 'exampleUserId'; 
         const user: User | undefined = await this.userService.findById(userId);
   
-        // Now TypeScript knows the structure of the user object
-        // You can use 'user' in your code without TypeScript errors
         if (user) {
-          // Your logic here
-          console.log(user.email); // Example usage
+          console.log(user.email); 
         } else {
           throw new BadRequestException('Пользователь не найден');
         }
       } catch (error) {
-        // Handle the error
         console.error('Пользователь не найден:', error);
         throw new BadRequestException('Не удалось выполнить какой-либо метод');
       }
@@ -107,8 +102,6 @@ export class AuthService {
     }
    
     public generateAccessToken(user: IUser): string {
-    // Your logic for generating a new access token
-    // For example, use JwtService to sign a new token
 
     const payload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
@@ -127,17 +120,14 @@ export class AuthService {
 
     async refreshAccessToken(user: IUser): Promise<IUser> {   
       try {
-        // Generate a new access token
         const refreshedAccessToken = this.generateAccessToken(user);
     
         if ('refreshToken' in user) {
           (user as User).refreshToken = refreshedAccessToken;
         }
     
-        // Save the updated user entity to the database
         await this.userRepository.save(user as User);
     
-        // Return the user with the refreshed access token
         return user as IUser;
       } catch (error) {
         console.error('Не удалось обновить токен доступа:', error);

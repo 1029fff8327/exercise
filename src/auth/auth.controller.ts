@@ -1,24 +1,22 @@
 import {
   Controller,
   Post,
-  UseGuards,
-  Request,
-  Get,
   Body,
-  UnauthorizedException,
   BadRequestException,
   HttpStatus,
-  Query,
   HttpException,
+  NotFoundException,
+  ValidationPipe,
+  UsePipes,
  } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt.auth.guard';
 import { ResetPasswordDto } from './reset/reset-password.dto';
 import { ResetPasswordConfirmDto } from './reset/reset-confirm-password.dto';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 import { LoginDto } from './dto/Login.dto';
 import { ActivateAccountDto } from './dto/activate-account.dto';
 import { UserService } from 'src/user/user.service';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -27,6 +25,40 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     ) {}
+
+    
+  @ApiOperation({ summary: 'Create User' })
+  @Post('register') 
+  @UsePipes(new ValidationPipe())
+  @ApiBody({ type: CreateUserDto, description: 'Пользовательские данные для создания нового пользователя' })
+  @ApiResponse({ 
+    status: HttpStatus.CREATED,
+    description: 'Пользователь успешно создан',
+  })
+  @ApiResponse({ 
+    status: HttpStatus.BAD_REQUEST,
+    description: 'плохой запрос' 
+  })
+  async register(@Body() createUserDto: CreateUserDto) {
+    try {
+      const result = await this.userService.create(createUserDto);
+      return {
+        message: 'Пользователь успешно создан',
+        user: result.user,
+      };
+    } catch (error) {
+      this.handleCreateUserError(error);
+    }
+  }
+
+  private handleCreateUserError(error: any): never {
+    if (error instanceof BadRequestException) {
+      throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
+    }
+
+    throw new HttpException({ message: 'Внутренняя ошибка сервера при создании пользователя' }, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
 
 @Post('login')
 @ApiOperation({ summary: 'Войдите в приложение' })
@@ -54,7 +86,7 @@ async login(@Body() loginDto: LoginDto): Promise<any> {
       expiresIn: result.expiresIn,
     };
   } catch (error) {
-    // Обрабатываем ошибку и возвращаем соответствующий HTTP-статус
+    
     throw new HttpException(
       { status: HttpStatus.BAD_REQUEST, error: 'Неверные учетные данные для входа в систему' },
       HttpStatus.BAD_REQUEST,
@@ -71,19 +103,14 @@ async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{
   try {
     const { token } = activateAccountDto;
 
-    // Log the received activation token
     console.log('Received Activation Token:', token);
 
-    // Verify the activation token
     const decodedToken = this.userService.verifyActivationToken(token);
 
-    // Log the decoded activation token
     console.log('Decoded Activation Token:', decodedToken); 
 
-    // Rest of your activation logic
     await this.authService.activateAccount(token);
 
-    // Respond with a success message or any other relevant response
     return { message: 'Учетная запись успешно активирована' };
   } catch (error) {
     throw new BadRequestException('Недействительный токен активации');
@@ -91,18 +118,23 @@ async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{
 }
 
 @Post('reset-password')
-@ApiOperation({ summary: 'сброс пароля' })
-@ApiOkResponse({ status: 200, description: 'Электронное письмо для сброса пароля отправлено успешно', type: Object })
-@ApiBadRequestResponse({ status: 400, description: 'Не удалось отправить электронное письмо для сброса пароля' })
-async requestPasswordReset(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
-  try {
-    await this.authService.requestPasswordReset(resetPasswordDto.email);
+  @ApiOperation({ summary: 'сброс пароля' })
+  @ApiOkResponse({ status: 200, description: 'Электронное письмо для сброса пароля отправлено успешно', type: Object })
+  @ApiBadRequestResponse({ status: 400, description: 'Не удалось отправить электронное письмо для сброса пароля' })
+  async requestPasswordReset(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    try {
+      const user = await this.userService.findByEmail(resetPasswordDto.email);
 
-    return { message: 'Электронное письмо для сброса пароля отправлено успешно' };
-  } catch (error) {
-    throw new BadRequestException('Не удалось отправить электронное письмо для сброса пароля');
+      if (user) {
+        await this.userService.sendActivationEmail(user);
+        return { message: 'Электронное письмо для сброса пароля отправлено успешно' };
+      } else {
+        throw new NotFoundException('Пользователь не найден');
+      }
+    } catch (error) {
+      throw new BadRequestException('Не удалось отправить электронное письмо для сброса пароля');
+    }
   }
-}
 
 @Post('reset-password-confirm')
 @ApiOperation({ summary: 'Сброс пароля подтвердите' })

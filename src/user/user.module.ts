@@ -1,6 +1,5 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserController } from './user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.model';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -20,7 +19,7 @@ import { MailModule } from 'src/mail/mail.module';
     MailModule, 
     ConfigModule,
   ],
-  controllers: [UserController],
+  controllers: [],
   providers: [
     UserService,
     JwtService,
