@@ -30,20 +30,20 @@ export class AuthController {
   @ApiOperation({ summary: 'Create User' })
   @Post('register') 
   @UsePipes(new ValidationPipe())
-  @ApiBody({ type: CreateUserDto, description: 'Пользовательские данные для создания нового пользователя' })
+  @ApiBody({ type: CreateUserDto, description: 'User data for creating a new user' })
   @ApiResponse({ 
     status: HttpStatus.CREATED,
-    description: 'Пользователь успешно создан',
+    description: 'The user has been successfully created',
   })
   @ApiResponse({ 
     status: HttpStatus.BAD_REQUEST,
-    description: 'плохой запрос' 
+    description: 'bad request' 
   })
   async register(@Body() createUserDto: CreateUserDto) {
     try {
       const result = await this.userService.create(createUserDto);
       return {
-        message: 'Пользователь успешно создан',
+        message: 'The user has been successfully created',
         user: result.user,
       };
     } catch (error) {
@@ -56,15 +56,15 @@ export class AuthController {
       throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
     }
 
-    throw new HttpException({ message: 'Внутренняя ошибка сервера при создании пользователя' }, HttpStatus.INTERNAL_SERVER_ERROR);
+    throw new HttpException({ message: 'Internal server error when creating a user' }, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
 
 @Post('login')
-@ApiOperation({ summary: 'Войдите в приложение' })
+@ApiOperation({ summary: 'Log in to the app' })
 @ApiResponse({ 
   status: HttpStatus.OK, 
-  description: 'Пользователь успешно вошел в систему',
+  description: 'The user has successfully logged in',
   
   schema: {
     properties: {
@@ -74,7 +74,7 @@ export class AuthController {
     },
   },
 })
-@ApiBadRequestResponse({ description: 'Неверные учетные данные для входа в систему' })
+@ApiBadRequestResponse({ description: 'Invalid login credentials' })
 async login(@Body() loginDto: LoginDto): Promise<any> {
   try {
     const result = await this.authService.login(loginDto.email, loginDto.password);
@@ -88,7 +88,7 @@ async login(@Body() loginDto: LoginDto): Promise<any> {
   } catch (error) {
     
     throw new HttpException(
-      { status: HttpStatus.BAD_REQUEST, error: 'Неверные учетные данные для входа в систему' },
+      { status: HttpStatus.BAD_REQUEST, error: 'Invalid login credentials' },
       HttpStatus.BAD_REQUEST,
     );
   }
@@ -96,9 +96,9 @@ async login(@Body() loginDto: LoginDto): Promise<any> {
 
 @ApiOperation({ summary: 'Activate Account' })
 @Post('activate-account')
-@ApiOperation({ summary: 'Активировать учетную запись' })
-@ApiResponse({ status: HttpStatus.OK, description: 'Учетная запись успешно активирована' })
-@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Недействительный токен активации' })
+@ApiOperation({ summary: 'Activate your account' })
+@ApiResponse({ status: HttpStatus.OK, description: 'The account has been successfully activated' })
+@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid activation token' })
 async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{ message: string }> {
   try {
     const { token } = activateAccountDto;
@@ -111,35 +111,35 @@ async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{
 
     await this.authService.activateAccount(token);
 
-    return { message: 'Учетная запись успешно активирована' };
+    return { message: 'The account has been successfully activated' };
   } catch (error) {
-    throw new BadRequestException('Недействительный токен активации');
+    throw new BadRequestException('Invalid activation token');
   }
 }
 
 @Post('reset-password')
-  @ApiOperation({ summary: 'сброс пароля' })
-  @ApiOkResponse({ status: 200, description: 'Электронное письмо для сброса пароля отправлено успешно', type: Object })
-  @ApiBadRequestResponse({ status: 400, description: 'Не удалось отправить электронное письмо для сброса пароля' })
+  @ApiOperation({ summary: 'password reset' })
+  @ApiOkResponse({ status: 200, description: 'The password reset email was sent successfully', type: Object })
+  @ApiBadRequestResponse({ status: 400, description: 'Failed to send an email to reset your password' })
   async requestPasswordReset(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
     try {
       const user = await this.userService.findByEmail(resetPasswordDto.email);
 
       if (user) {
         await this.userService.sendActivationEmail(user);
-        return { message: 'Электронное письмо для сброса пароля отправлено успешно' };
+        return { message: 'The password reset email was sent successfully' };
       } else {
-        throw new NotFoundException('Пользователь не найден');
+        throw new NotFoundException('The user was not found');
       }
     } catch (error) {
-      throw new BadRequestException('Не удалось отправить электронное письмо для сброса пароля');
+      throw new BadRequestException('Failed to send an email to reset your password');
     }
   }
 
 @Post('reset-password-confirm')
-@ApiOperation({ summary: 'Сброс пароля подтвердите' })
-@ApiOkResponse({ status: 200, description: 'Успешный сброс пароля', type: Object })
-@ApiBadRequestResponse({ status: 400, description: 'Не удалось сбросить пароль' })
+@ApiOperation({ summary: 'Confirm password reset' })
+@ApiOkResponse({ status: 200, description: 'Successful password reset', type: Object })
+@ApiBadRequestResponse({ status: 400, description: 'The password could not be reset' })
   async resetPassword(@Body() resetPasswordConfirmDto: ResetPasswordConfirmDto): Promise<{ message: string }> {
     try {
       await this.authService.resetPassword(
@@ -147,9 +147,9 @@ async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{
         resetPasswordConfirmDto.newPassword,
       );
 
-      return { message: 'Успешный сброс пароля' };
+      return { message: 'Successful password reset' };
     } catch (error) {
-      throw new BadRequestException('Не удалось сбросить пароль');
+      throw new BadRequestException('The password could not be reset');
     }
   }
 }

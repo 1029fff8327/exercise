@@ -74,7 +74,7 @@ export class UserService {
       return this.jwtService.verify(token);
     } catch (error) {
       console.error('Error verifying activation token:sendActivationEmail', error);
-      throw new BadRequestException('Недействительный токен активации');
+      throw new BadRequestException('Invalid activation token');
     }
   }
 
@@ -175,8 +175,8 @@ async removeResetToken(user: User): Promise<void> {
       const user = await this.userRepository.findOne({ where: { id: userId } });
       return user;
     } catch (error) {
-      console.error('Ошибка при поиске по ID:', error);
-      throw new BadRequestException('Не удалось найти пользователя по ID');
+      console.error('Error when searching by ID:', error);
+      throw new BadRequestException('The user could not be found by ID');
     }
   }
 
@@ -195,7 +195,7 @@ async removeResetToken(user: User): Promise<void> {
     try {
       const existingUser = await this.userRepository.findOne({ where: { id: userId } });
       if (!existingUser) {
-        throw new BadRequestException('Пользователь не найден');
+        throw new BadRequestException('The user was not found');
       }
 
       if (updatedData.email) {
@@ -208,7 +208,7 @@ async removeResetToken(user: User): Promise<void> {
 
       await this.userRepository.save(existingUser);
     } catch (error) {
-      throw new BadRequestException('Не удалось обновить пользователя');
+      throw new BadRequestException('Failed to update the user');
     }
   }
 

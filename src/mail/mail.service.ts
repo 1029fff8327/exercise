@@ -44,9 +44,9 @@ export class MailService {
   }
 
   async sendResetTokenEmail(user: User, resetToken: string): Promise<void> {
-    const resetLink = `http://your-frontend-url/reset-password?token=${resetToken}`;
-    const subject = 'Сброс пароля';
-    const text = `Для сброса пароля перейдите по ссылке: ${resetLink}`;
+    const resetLink = `resetToken=${resetToken}`;
+    const subject = 'Password Reset';
+    const text = `To reset your password, follow the link: ${resetLink}`;
 
     await this.sendMail(user.email, subject, text);
   }

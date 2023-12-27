@@ -8,6 +8,6 @@ export class ResetPasswordConfirmDto {
 
   @ApiProperty()
   @IsString()
-  @MinLength(6, { message: 'Пароль должен содержать как минимум 6 символов' })
+  @MinLength(6, { message: 'The password must contain at least 6 characters' })
   newPassword: string;
 }

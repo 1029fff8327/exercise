@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       const now = Math.floor(Date.now() / 1000);
       if (exp && now > exp) {
-        throw new UnauthorizedException('Срок действия токена истек');
+        throw new UnauthorizedException('The token has expired');
       }
 
       const expirationBuffer = 60; 
@@ -41,7 +41,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       const sanitizedUser = { id: escape((user as IUser).id), email: escape((user as IUser).email) };
 
       if (!sanitizedUser.id || !sanitizedUser.email) {
-        throw new BadRequestException('Неверные пользовательские данные');
+        throw new BadRequestException('Invalid user data');
       }
 
       const refreshToken = this.extractRefreshToken(user as IUser);
@@ -52,7 +52,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       return { ...sanitizedUser, refreshToken: typedRefreshToken, accessToken };
     } catch (error) {
-      throw new UnauthorizedException('Недопустимый токен');
+      throw new UnauthorizedException('Invalid token');
     }
   }
 
@@ -60,7 +60,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (user && 'accessToken' in user && typeof user.accessToken === 'string') {
       return user.accessToken;
     } else {
-      throw new BadRequestException('Недоступный токен доступа');
+      throw new BadRequestException('An unavailable access token');
     }
   }
 
@@ -68,7 +68,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (user && 'refreshToken' in user) {
       return (user as IUser)?.refreshToken ?? null;
     } else {
-      throw new BadRequestException('Недоступный токен обновления');
+      throw new BadRequestException('An unavailable update token');
     }
   }
 }

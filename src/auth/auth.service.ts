@@ -40,8 +40,8 @@ export class AuthService {
 
     await this.mailService.sendMail(
       user.email,
-      "Запрос на сброс пароля",
-      `Чтобы сбросить свой пароль, перейдите по следующей ссылке: http://your-frontend-url/reset-password?token=${resetToken}`,
+      "Password reset request",
+      `To reset your password, click on the following link: http://your-frontend-url/reset-password?token=${resetToken}`,
      );
     }
 
@@ -53,11 +53,11 @@ export class AuthService {
         if (user) {
           console.log(user.email); 
         } else {
-          throw new BadRequestException('Пользователь не найден');
+          throw new BadRequestException('The user was not found');
         }
       } catch (error) {
-        console.error('Пользователь не найден:', error);
-        throw new BadRequestException('Не удалось выполнить какой-либо метод');
+        console.error('The user was not found:', error);
+        throw new BadRequestException('Failed to execute any method');
       }
     }
   
@@ -66,7 +66,7 @@ export class AuthService {
       const user = await this.userService.verifyResetToken(resetToken);
   
       if (!user) {
-        throw new BadRequestException('Недействительный или просроченный токен сброса');
+        throw new BadRequestException('Invalid or expired reset token');
       }
   
       try {
@@ -76,12 +76,12 @@ export class AuthService {
   
         await this.mailService.sendMail(
           user.email,
-          "Сброс пароля завершен успешно",
-          "Ваш пароль был успешно сброшен",
+          "Password reset completed successfully",
+          "Your password has been successfully reset",
         );
       } catch (error) {
-        console.error('Ошибка сброса пароля:', error);
-        throw new BadRequestException("Ошибка при сбросе пароля");
+        console.error('Password reset error:', error);
+        throw new BadRequestException("An error occurred when resetting the password");
       }
     }  
 
@@ -97,7 +97,7 @@ export class AuthService {
   
       return resetToken;
     } catch (error) {
-      console.error('Ошибка, генерирующая токен сброса:', error);
+      console.error('Error generating reset token:', error);
       return null;
     }
    
@@ -112,7 +112,7 @@ export class AuthService {
   generateRefreshToken(user: IUser): string {
     const { id, email } = user;
     if (!id || !email) {
-      throw new BadRequestException('Недопустимые пользовательские данные для генерации токена обновления');
+      throw new BadRequestException('Invalid user data for generating the update token');
     }
   
     return this.jwtService.sign({ id, email }, { expiresIn: this.configService.get<number>('JWT_REFRESH_EXPIRATION_TIME') });
@@ -130,8 +130,8 @@ export class AuthService {
     
         return user as IUser;
       } catch (error) {
-        console.error('Не удалось обновить токен доступа:', error);
-        throw new BadRequestException('Не удалось обновить refresh access token');
+        console.error('The access token could not be updated:', error);
+        throw new BadRequestException('Failed to update refresh access token');
       }
     }
   
@@ -140,18 +140,18 @@ export class AuthService {
         const userId = await this.redisClient.get(`resetToken:${resetToken}`);
   
         if (!userId) {
-          throw new BadRequestException('Недействительный или просроченный токен сброса');
+          throw new BadRequestException('Invalid or expired reset token');
         }
   
         const user = await this.userRepository.findOne(userId);
   
         if (!user) {
-          throw new BadRequestException('Ошибка');
+          throw new BadRequestException('Mistake');
         }
   
         return user;
       } catch (error) {
-        console.error('Ошибка при проверке токена сброса:', error);
+        console.error('Error checking the reset token:', error);
         return null;
       }
     }
@@ -160,7 +160,7 @@ export class AuthService {
       const user = await this.userService.findByEmail(email);
   
       if (!user || !(await this.userService.checkPassword(user, password))) {
-        throw new BadRequestException('Неверные учетные данные');
+        throw new BadRequestException('Invalid credentials');
       }
   
       const payload: IUser = {
@@ -192,7 +192,7 @@ export class AuthService {
       try {
         await this.redisClient.del(`resetToken:${user.resetToken}`);
       } catch (error) {
-        console.error('Ошибка при удалении токена сброса:', error);
+        console.error('Error deleting the reset token:', error);
       }
     }
 
@@ -210,7 +210,7 @@ export class AuthService {
     const user = await this.userService.findByEmail(email);
   
     if (!user) {
-      throw new BadRequestException('Некорректный пароль или аккаунт не активирован');
+      throw new BadRequestException('Incorrect password or account is not activated');
     }
   
     const passwordIsMatch = await argon2.verify(user.password, password);
@@ -222,7 +222,7 @@ export class AuthService {
     };
 
     if (!sanitizedUser || !passwordIsMatch || !sanitizedUser.isActivated) {
-      throw new BadRequestException('Некорректный пароль или аккаунт не активирован');
+      throw new BadRequestException('Incorrect password or account is not activated');
     }
 
     return sanitizedUser;
@@ -235,17 +235,17 @@ export class AuthService {
       const user = await this.userService.findByEmail(decodedToken.email);
 
       if (!user) {
-        throw new BadRequestException('Недействительный токен активации');
+        throw new BadRequestException('Invalid activation token');
       }
 
       if (user.isActivated) {
-        throw new BadRequestException('Учетная запись уже активирована');
+        throw new BadRequestException('The account has already been activated');
       }
 
       await this.userService.updateUserActivation(user.id, true);
 
     } catch (error) {
-      throw new BadRequestException('Недействительный токен активации');
+      throw new BadRequestException('Invalid activation token');
     }
   }
 
