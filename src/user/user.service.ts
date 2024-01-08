@@ -2,23 +2,25 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, InternalSer
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.model';
-import { Repository } from 'typeorm';
 import * as argon2 from "argon2";
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/mail.service';
-import * as jwt from 'jsonwebtoken';
-import { RedisService } from '@liaoliaots/nestjs-redis';
 import { v4 as uuidv4 } from 'uuid';
+import { RedisConstants } from 'src/global/redis-client';
+import { RedisClientService } from 'src/global/redis-client/redis.client.service';
+import { UserRepository } from 'src/repository/user.repository';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
   user: any;
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserRepository)
+    private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
-    private readonly redisService: RedisService,
+    private readonly redisService: RedisClientService,
+    private readonly configService: ConfigService,
   ) {}
 
   public async create(createUserDto: CreateUserDto): Promise<{ user: User}> {
@@ -60,39 +62,26 @@ export class UserService {
     throw new HttpException({ message: 'Internal server error while creating user' }, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  generateActivationToken(user: User): string {
-    const payload = { sub: user.id, email: user.email };
-    const options = {
-      expiresIn: '1h',
-    };
+async sendActivationEmail(user: User): Promise<void> {
+  try {
+    const resetToken = await this.generateResetToken(user);
+    const resetLink = `resetToken=${resetToken}`;
+    const subject = 'Password Reset';
+    const text = `To reset your password, click the following link: ${resetLink}`;
 
-    return this.jwtService.sign(payload, options);
+    await this.mailService.sendMail({
+      from: this.configService.get<string>('EMAIL_FROM'), 
+      to: user.email,
+      subject,
+      text,
+    });
+
+    console.log('Password reset email sent successfully.');
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw new InternalServerErrorException('Error sending password reset email');
   }
-
-  verifyActivationToken(token: string): any {
-    try {
-      return this.jwtService.verify(token);
-    } catch (error) {
-      console.error('Error verifying activation token:sendActivationEmail', error);
-      throw new BadRequestException('Invalid activation token');
-    }
-  }
-
-  async sendActivationEmail(user: User): Promise<void> {
-    try {
-      const resetToken = await this.generateResetToken(user);
-      const resetLink = `resetToken=${resetToken}`;
-      const subject = 'Password Reset';
-      const text = `To reset your password, click the following link: ${resetLink}`;
-
-      await this.mailService.sendMail(user.email, subject, text);
-      console.log('Password reset email sent successfully.');
-    } catch (error) {
-      console.error('Error sending password reset email:', error);
-      throw new InternalServerErrorException('Error sending password reset email');
-    }
-  }
-
+}
 
   generateRefreshToken(user: User): string {
     const payload = { sub: 'refreshToken', userId: user.id };
@@ -101,8 +90,9 @@ export class UserService {
     };
 
     const refresh_token = uuidv4();
+    const key = `${RedisConstants.refreshTokenPrefix}${refresh_token}`;
 
-    this.redisService.getClient().set(refresh_token, user.id, 'EX', 604800);
+    this.redisService.set(key, user.id, 'EX', 604800);
 
     return this.jwtService.sign(payload, options);
   }
@@ -115,16 +105,18 @@ export class UserService {
     };
 
     const access_token = uuidv4();
+    const key = `${RedisConstants.accessTokenPrefix}${access_token}`;
 
-    this.redisService.getClient().set(access_token, user.id, 'EX', 3600);
+    this.redisService.set(key, user.id, 'EX', 3600); 
 
     return this.jwtService.sign(payload, options);
   }
 
   async generateResetToken(user: User): Promise<string> {
     const resetToken = uuidv4();
+    const key = `${RedisConstants.resetTokenPrefix}${resetToken}`;
 
-    await this.redisService.getClient().set(resetToken, user.id, 'EX', 3600);
+    await this.redisService.set(key, user.id, 'EX', 3600);
 
     user.resetToken = resetToken;
     await this.userRepository.save(user);
@@ -133,13 +125,14 @@ export class UserService {
   }
 
   async verifyResetToken(resetToken: string): Promise<User | null> {
-    const userId = await this.redisService.getClient().get(resetToken);
+    const key = `${RedisConstants.resetTokenPrefix}${resetToken}`;
+    const userId = await this.redisService.get(key);
 
     if (!userId) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    await this.redisService.getClient().del(resetToken);
+    await this.redisService.del(key);
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
@@ -150,25 +143,29 @@ export class UserService {
     return user;
   }
 
-async removeResetToken(user: User): Promise<void> {
-  if (user.resetToken) {
-    await this.redisService.getClient().del(user.resetToken);
+  async removeResetToken(user: User): Promise<void> {
+    if (user.resetToken) {
+      const key = `${RedisConstants.resetTokenPrefix}${user.resetToken}`;
+      await this.redisService.del(key);
+    }
+
+    user.resetToken = null;
+    await this.userRepository.save(user);
   }
 
-  user.resetToken = null;
-  await this.userRepository.save(user);
-}
 
   async updatePassword(user: User): Promise<void> {
 
     await this.userRepository.save(user);
   }
 
+  
   async findByEmail(email: string) {
     return await this.userRepository.findOne({ where: {
       email:email
     } })
   }
+
 
   async findById(userId: string): Promise<User | undefined> {
     try {

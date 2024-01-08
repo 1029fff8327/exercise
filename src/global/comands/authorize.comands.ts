@@ -1,4 +1,4 @@
-import { FlamingoMethods, IFlamingoReqCmd } from '../models/service.models';
+import { FlamingoMethods, IFlamingoReqCmd } from "../models/service.model";
 
 export class AuthorizeCommand {
 

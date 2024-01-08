@@ -1,51 +1,37 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RedisModule, RedisModuleOptions } from '@liaoliaots/nestjs-redis';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
-import { User } from './user/user.model';
 import { JwtModule } from '@nestjs/jwt';
+import { PostgresConfig } from './config/typeorm.config';
+import { ConfigModule } from './config/config.module';
+import { RedisConfig } from './config/redis.config';
+import { JwtConfig } from './config/jwt.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('POSTGRES_HOST'),
-        port: configService.get('POSTGRES_PORT'),
-        username: configService.get('POSTGRES_USER'),
-        password: configService.get('POSTGRES_PASSWORD'),
-        database: configService.get('POSTGRES_DB'),
-        synchronize: true,
-        entities: [User],
-      }),
-      inject: [ConfigService],
+      useExisting: PostgresConfig,
+      inject: [PostgresConfig],
     }),
+
     RedisModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<RedisModuleOptions> => ({
-        config: {
-          host: configService.get('REDIS_HOST'),
-          port: configService.get('REDIS_PORT'),
-          password: configService.get('REDIS_PASSWORD'),
-        },
-      }),
-      inject: [ConfigService],
+      useExisting: RedisConfig,
+      inject: [RedisConfig],
     }),
     JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
-        signOptions: { expiresIn: '1h' },
-      }),
-      inject: [ConfigService],
+      useExisting: JwtConfig,
+      inject: [ConfigModule]
     }),
     UserModule,
     AuthModule,
     MailModule,
   ],
+  controllers: [],
 })
 export class AppModule {}

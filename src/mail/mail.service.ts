@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { User } from '../user/user.model';
 import { ConfigService } from '@nestjs/config';
-import { MailMapper } from './mappers/mail.mapper';
-
+import { User } from '../user/user.model';
+import { ISendMailProps } from './models/mail.models';
+import { MailMapper } from './mappers/mail.mapper'; 
 
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
-
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       host: this.configService.get<string>('EMAIL_HOST'),
@@ -23,48 +22,40 @@ export class MailService {
   }
 
   async sendActivationEmail(data: { email: string, activationToken: string }): Promise<void> {
-    const activationLink = `http://your-frontend-url/activate-account?token=${data.activationToken}`;
-    const subject = 'Activation Email';
-    const text = `Click the following link to activate your account: ${activationLink}`;
-
-    const email = data.email;
-
-    const mailOptions = {
+    const mailProps: ISendMailProps = {
       from: this.configService.get<string>('EMAIL_FROM'),
-      to: email,
-      subject: 'Activate Your Account',
-      text: `Click the following link to activate your account: ${activationLink}`,
+      to: data.email,
+      subject: 'Activation Email',
+      text: `Click the following link to activate your account: http://your-frontend-url/activate-account?token=${data.activationToken}`,
     };
 
-    try {
-      await this.transporter.sendMail(mailOptions);
-      console.log('Activation email sent successfully.');
-    } catch (error) {
-      console.error('Error sending activation email:', error);
-    }
+    await this.sendMail(mailProps);
   }
 
   async sendResetTokenEmail(user: User, resetToken: string): Promise<void> {
-    const resetLink = `resetToken=${resetToken}`;
-    const subject = 'Password Reset';
-    const text = `To reset your password, follow the link: ${resetLink}`;
+    const mailProps: ISendMailProps = {
+      from: this.configService.get<string>('EMAIL_FROM'),
+      to: user.email,
+      subject: 'Password Reset',
+      text: `To reset your password, follow the link: resetToken=${resetToken}`,
+    };
 
-    await this.sendMail(user.email, subject, text);
+    await this.sendMail(mailProps);
   }
 
-  async sendMail(to: string, subject: string, text: string): Promise<void> {
-    const mailOptions = MailMapper.buildMailPayload({
+  async sendMail(mailProps: ISendMailProps): Promise<void> {
+    const completeMailProps = {
       from: this.configService.get<string>('EMAIL_FROM'),
-      to: to,
-      subject: subject,
-      text: text,
-    });
+      ...mailProps,
+    };
+
+    const mailOptions = MailMapper.buildMailPayload(completeMailProps);
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log('Email sent successfully to:', to);
+      console.log('Email sent successfully to:', mailProps.to);
     } catch (error) {
-      console.error('Error sending email to:', to);
+      console.error('Error sending email to:', mailProps.to);
       console.error('Error details:', error);
     }
   }

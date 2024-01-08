@@ -1,9 +1,6 @@
 import axios from 'axios';
 import { FlamingoError } from './flamingo.error';
-import {
-  IFlamingoClientOptions,
-  IFlamingoReqCmd,
-} from './models/service.models';
+import { IFlamingoClientOptions, IFlamingoReqCmd } from '../models/service.model';
 
 export class FlamingoClient {
 

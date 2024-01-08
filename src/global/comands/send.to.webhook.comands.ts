@@ -1,4 +1,5 @@
-import { FlamingoMethods, IFlamingoReqCmd, IFlamingoUserDoc } from '../models/service.models';
+import { FlamingoMethods, IFlamingoReqCmd, IFlamingoUserDoc } from "../models/service.model";
+
 
 export class SendToWebhookCommand {
 
@@ -8,5 +9,4 @@ export class SendToWebhookCommand {
       data: props,
     };
   }
-
 }

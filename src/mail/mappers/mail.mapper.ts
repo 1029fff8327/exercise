@@ -1,4 +1,4 @@
-import { ISendMailProps } from '../models/mail.models';
+import { ISendMailProps } from "../models/mail.models"; 
 
 export class MailMapper {
   public static buildMailPayload(props: ISendMailProps): ISendMailProps {
@@ -7,6 +7,6 @@ export class MailMapper {
       text: props.text,
       to: props.to,
       subject: props.subject,
-    }
+    };
   }
 }

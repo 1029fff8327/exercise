@@ -7,28 +7,30 @@ import { JwtService } from '@nestjs/jwt';
 import { IUser } from './types/types';
 import { MailService } from 'src/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
-import { User } from 'src/user/user.model';
-import { Repository } from 'typeorm';
-import { RedisService } from '@liaoliaots/nestjs-redis';  
+import { User } from 'src/user/user.model';  
 import { InjectRepository } from '@nestjs/typeorm';
+import { UserRepository } from 'src/repository/user.repository';
+import { RedisClientService } from 'src/global/redis-client/redis.client.service';
+import { RedisConstants } from 'src/global/redis-client';
 
 @Injectable()
 export class AuthService {
   private readonly redisClient;
 
  constructor(
-  @InjectRepository(User) 
-  private readonly userRepository: Repository<User>,
+  @InjectRepository(UserRepository) 
+  private readonly userRepository: UserRepository,
   private readonly userService: UserService,
   private readonly jwtService: JwtService,
   private readonly mailService: MailService,
   private readonly configService: ConfigService,
-  private readonly redisService: RedisService,
+  private readonly redisService: RedisClientService,
   ) {
-    this.redisClient = this.redisService.getClient();
+    this.redisClient = this.redisService['getClient'] ? this.redisService['getClient']() : this.redisService;
   }
 
-  async requestPasswordReset(email: string): Promise<void> {
+async requestPasswordReset(email: string): Promise<void> {
+  try {
     const user = await this.userService.findByEmail(email);
 
     if (!user) {
@@ -38,12 +40,18 @@ export class AuthService {
 
     const resetToken = await this.userService.generateResetToken(user);
 
-    await this.mailService.sendMail(
-      user.email,
-      "Password reset request",
-      `To reset your password, click on the following link: http://your-frontend-url/reset-password?token=${resetToken}`,
-     );
-    }
+    await this.mailService.sendMail({
+      from: this.configService.get<string>('EMAIL_FROM'), 
+      to: user.email,
+      subject: "Password reset request",
+      text: `To reset your password, click on the following link: http://your-frontend-url/reset-password?token=${resetToken}`,
+    });
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw new BadRequestException('Failed to send password reset email');
+  }
+}
+
 
     async someMethod(): Promise<void> {
       try {
@@ -62,61 +70,69 @@ export class AuthService {
     }
   
     async resetPassword(resetToken: string, newPassword: string): Promise<void> {
-    
-      const user = await this.userService.verifyResetToken(resetToken);
-  
-      if (!user) {
-        throw new BadRequestException('Invalid or expired reset token');
-      }
-  
       try {
-        user.password = await argon2.hash(newPassword);
-        await this.userService.updatePassword(user);
-        await this.userService.removeResetToken(user);
-  
-        await this.mailService.sendMail(
-          user.email,
-          "Password reset completed successfully",
-          "Your password has been successfully reset",
-        );
+        const user = await this.userService.verifyResetToken(resetToken);
+
+        if (!user) {
+          throw new BadRequestException('Invalid or expired reset token');
+        }
+
+        await this.mailService.sendMail({
+          from: this.configService.get<string>('EMAIL_FROM'), 
+          to: user.email,
+          subject: "Password reset completed successfully",
+          text: "Your password has been successfully reset",
+        });
+
       } catch (error) {
         console.error('Password reset error:', error);
         throw new BadRequestException("An error occurred when resetting the password");
       }
-    }  
+    }
+
 
     async generateResetToken(user: User): Promise<string> {
-      const resetToken = await this.jwtService.signAsync(
-        { id: user.id, email: user.email },
-        { expiresIn: this.configService.get<number>('JWT_RESET_EXPIRATION_TIME') },
-      );
+      try {
+        const resetToken = await this.jwtService.signAsync(
+          { id: user.id, email: user.email },
+          { expiresIn: this.configService.get<number>('JWT_RESET_EXPIRATION_TIME') },
+        );
   
-      await this.redisClient.set(`resetToken:${resetToken}`, user.id, 'EX', 3600); 
-
-      await this.userRepository.save(user);
+        const key = `${RedisConstants.resetTokenPrefix}${resetToken}`;
+        await this.redisService.set(key, user.id, 'EX', 3600);
   
-      return resetToken;
-    } catch (error) {
-      console.error('Error generating reset token:', error);
-      return null;
+        await this.userRepository.save(user);
+  
+        return resetToken;
+      } catch (error) {
+        console.error('Error generating reset token:', error);
+        return null;
+      }
     }
    
-    public generateAccessToken(user: IUser): string {
-
-    const payload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-
-    return accessToken;
-  }
-
-  generateRefreshToken(user: IUser): string {
-    const { id, email } = user;
-    if (!id || !email) {
-      throw new BadRequestException('Invalid user data for generating the update token');
-    }
+    generateAccessToken(user: IUser): string {
+      const payload = { sub: user.id, email: user.email };
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
   
-    return this.jwtService.sign({ id, email }, { expiresIn: this.configService.get<number>('JWT_REFRESH_EXPIRATION_TIME') });
-  }
+      const key = `${RedisConstants.accessTokenPrefix}${accessToken}`;
+      this.redisService.set(key, user.id, 'EX', 3600);
+  
+      return accessToken;
+    }
+
+    generateRefreshToken(user: IUser): string {
+      const { id, email } = user;
+      if (!id || !email) {
+        throw new BadRequestException('Invalid user data for generating the update token');
+      }
+  
+      const refreshToken = this.jwtService.sign({ id, email }, { expiresIn: this.configService.get<number>('JWT_REFRESH_EXPIRATION_TIME') });
+  
+      const key = `${RedisConstants.refreshTokenPrefix}${refreshToken}`;
+      this.redisService.set(key, id, 'EX', 604800);
+  
+      return refreshToken;
+    }
 
     async refreshAccessToken(user: IUser): Promise<IUser> {   
       try {
@@ -137,22 +153,45 @@ export class AuthService {
   
     async verifyResetToken(resetToken: string): Promise<User | null> {
       try {
-        const userId = await this.redisClient.get(`resetToken:${resetToken}`);
+        const userId = await this.redisService.get(`${RedisConstants.resetTokenPrefix}${resetToken}`);
   
         if (!userId) {
           throw new BadRequestException('Invalid or expired reset token');
         }
   
-        const user = await this.userRepository.findOne(userId);
+        const user = await this.userRepository.findOne({ where: { id: userId } });
   
         if (!user) {
-          throw new BadRequestException('Mistake');
+          throw new BadRequestException('User not found');
         }
   
         return user;
       } catch (error) {
         console.error('Error checking the reset token:', error);
         return null;
+      }
+    }
+
+    generateActivationToken(user: User): string {
+      const payload = { sub: user.id, email: user.email };
+      const options = {
+        expiresIn: '1h',
+      };
+  
+      const activationToken = this.jwtService.sign(payload, options);
+      const key = `${RedisConstants.activationTokenPrefix}${activationToken}`;
+  
+      this.redisService.set(key, user.id, 'EX', 3600); 
+  
+      return activationToken;
+    }
+  
+    verifyActivationToken(token: string): any {
+      try {
+        return this.jwtService.verify(token);
+      } catch (error) {
+        console.error('Error verifying activation token:', error);
+        throw new BadRequestException('Invalid activation token');
       }
     }
 
@@ -172,8 +211,8 @@ export class AuthService {
       };
   
       const accessToken = this.jwtService.sign(payload);
-      const refreshToken = this.userService.generateRefreshToken(user);
-      const activationToken = this.userService.generateActivationToken(user);
+      const refreshToken = this.generateRefreshToken(user);
+      const activationToken = this.generateActivationToken(user);
       const expiresIn = 3600; 
 
       return {
@@ -190,21 +229,11 @@ export class AuthService {
 
     async removeResetToken(user: User): Promise<void> {
       try {
-        await this.redisClient.del(`resetToken:${user.resetToken}`);
+        await this.redisService.del(`${RedisConstants.resetTokenPrefix}${user.resetToken}`);
       } catch (error) {
         console.error('Error deleting the reset token:', error);
       }
     }
-
-  async createActivationToken(user: IUser): Promise<string> {
-    const activationToken = await this.jwtService.signAsync(
-      { id: user.id, email: user.email },
-      { expiresIn: '1d' }, 
-    );
-    await this.mailService.sendActivationEmail({ email: user.email, activationToken });
-
-    return activationToken;
-  }
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.findByEmail(email);

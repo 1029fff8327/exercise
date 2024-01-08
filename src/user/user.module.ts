@@ -5,6 +5,8 @@ import { User } from './user.model';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { MailModule } from 'src/mail/mail.module';  
+import { UserRepository } from 'src/repository/user.repository';
+import { RedisClientService } from 'src/global/redis-client/redis.client.service';
 
 @Module({
   imports: [
@@ -16,14 +18,17 @@ import { MailModule } from 'src/mail/mail.module';
       }),
       inject: [ConfigService],
     }),
+   
     MailModule, 
     ConfigModule,
   ],
   controllers: [],
   providers: [
+    RedisClientService,
+    UserRepository,
     UserService,
     JwtService,
   ],
-  exports: [UserService, TypeOrmModule],
+  exports: [UserService, TypeOrmModule, RedisClientService],
 })
 export class UserModule {}

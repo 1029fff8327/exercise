@@ -1,5 +1,3 @@
-import { UserStatus } from '@unione-pro/unione.commons.nodepack/modules/gway/v4/client';
-
 export interface IFlamingoClientOptions {
   baseUrl: string;
   apiKey: string;
@@ -28,7 +26,6 @@ export interface IFlamingoInfo {
   city?: string;
   photo?: string;
   organization?: IFlamingoOrg;
-  role?: UserStatus;
 }
 
 export interface IFlamingoEducation {

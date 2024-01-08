@@ -1,7 +1,9 @@
 import { DynamicModule, FactoryProvider, Global, Module } from '@nestjs/common';
-import { IFlamingoClientOptions, FlamingoClient } from '../client';
-import { FlamingoConstants } from './flamingo.constants';
-import { IFlamingoAsyncOptions, IFlamingoConfigFactory } from './flamingo.interfaces';
+import { IFlamingoAsyncOptions, IFlamingoConfigFactory } from './flamingo.interface';
+import { FlamingoConstants } from './flamingo.constant';
+import { IFlamingoClientOptions } from '../models/service.model';
+import { FlamingoClient } from '../flamingo/flamingo.clients';
+
 
 @Global()
 @Module({})

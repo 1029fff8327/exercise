@@ -1,7 +1,8 @@
 import { HttpStatus } from '@nestjs/common';
 import { AxiosError } from 'axios';
-import { IFlamingoError } from './models/error.models';
-import { IResError } from './models/response.models';
+import { IFlamingoError } from '../models/error.model';
+import { IResError } from '../models/response.model';
+
 
 export class FlamingoError extends Error implements IFlamingoError {
 
