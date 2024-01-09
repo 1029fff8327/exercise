@@ -3,10 +3,8 @@ import { UserService } from './user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.model';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule, JwtService } from '@nestjs/jwt';
-import { MailModule } from 'src/mail/mail.module';  
+import { JwtModule, JwtService } from '@nestjs/jwt'; 
 import { UserRepository } from 'src/repository/user.repository';
-import { RedisClientService } from 'src/global/redis-client/redis.client.service';
 
 @Module({
   imports: [
@@ -17,18 +15,15 @@ import { RedisClientService } from 'src/global/redis-client/redis.client.service
         signOptions: { expiresIn: '1h' },
       }),
       inject: [ConfigService],
-    }),
-   
-    MailModule, 
+    }), 
     ConfigModule,
   ],
   controllers: [],
   providers: [
-    RedisClientService,
     UserRepository,
     UserService,
     JwtService,
   ],
-  exports: [UserService, TypeOrmModule, RedisClientService],
+  exports: [UserService, TypeOrmModule],
 })
 export class UserModule {}

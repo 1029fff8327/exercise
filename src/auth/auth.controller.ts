@@ -105,7 +105,7 @@ async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{
 
     console.log('Received Activation Token:', token);
 
-    const decodedToken = this.userService.verifyActivationToken(token);
+    const decodedToken = this.authService.verifyActivationToken(token);
 
     console.log('Decoded Activation Token:', decodedToken); 
 
@@ -126,7 +126,7 @@ async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{
       const user = await this.userService.findByEmail(resetPasswordDto.email);
 
       if (user) {
-        await this.userService.sendActivationEmail(user);
+        await this.authService.sendActivationEmail(user);
         return { message: 'The password reset email was sent successfully' };
       } else {
         throw new NotFoundException('The user was not found');

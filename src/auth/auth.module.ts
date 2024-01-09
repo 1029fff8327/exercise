@@ -9,6 +9,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailService } from 'src/mail/mail.service';
 import { UserService } from 'src/user/user.service';
+import { UserRepository } from 'src/repository/user.repository';
+import { RedisClientService } from 'src/global/redis-client/redis.client.service';
+import { RedisClientModule } from 'src/global/redis-client/redis.client.module';
 
 @Module({
   imports: [
@@ -24,9 +27,10 @@ import { UserService } from 'src/user/user.service';
       inject: [ConfigService],
     }),
     ConfigModule,
+    RedisClientModule,
    ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStratege, JwtStrategy, MailService, UserService],
+  providers: [AuthService, LocalStratege, JwtStrategy, MailService, UserService, UserRepository, RedisClientService],
   exports: [AuthService]
 })
 

@@ -1,5 +1,5 @@
 import {
-  BadRequestException, Injectable
+  BadRequestException, Injectable, InternalServerErrorException
  } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as argon2 from "argon2";
@@ -38,7 +38,7 @@ async requestPasswordReset(email: string): Promise<void> {
       return;
     }
 
-    const resetToken = await this.userService.generateResetToken(user);
+    const resetToken = await this.generateResetToken(user);
 
     await this.mailService.sendMail({
       from: this.configService.get<string>('EMAIL_FROM'), 
@@ -51,7 +51,6 @@ async requestPasswordReset(email: string): Promise<void> {
     throw new BadRequestException('Failed to send password reset email');
   }
 }
-
 
     async someMethod(): Promise<void> {
       try {
@@ -71,7 +70,7 @@ async requestPasswordReset(email: string): Promise<void> {
   
     async resetPassword(resetToken: string, newPassword: string): Promise<void> {
       try {
-        const user = await this.userService.verifyResetToken(resetToken);
+        const user = await this.verifyResetToken(resetToken);
 
         if (!user) {
           throw new BadRequestException('Invalid or expired reset token');
@@ -152,24 +151,37 @@ async requestPasswordReset(email: string): Promise<void> {
     }
   
     async verifyResetToken(resetToken: string): Promise<User | null> {
-      try {
-        const userId = await this.redisService.get(`${RedisConstants.resetTokenPrefix}${resetToken}`);
+      const key = `${RedisConstants.resetTokenPrefix}${resetToken}`;
+      const userId = await this.redisService.get(key);
   
-        if (!userId) {
-          throw new BadRequestException('Invalid or expired reset token');
-        }
-  
-        const user = await this.userRepository.findOne({ where: { id: userId } });
-  
-        if (!user) {
-          throw new BadRequestException('User not found');
-        }
-  
-        return user;
-      } catch (error) {
-        console.error('Error checking the reset token:', error);
-        return null;
+      if (!userId) {
+        throw new BadRequestException('Invalid or expired reset token');
       }
+  
+      await this.redisService.del(key);
+  
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+  
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+  
+      return user;
+    }
+  
+    async removeResetToken(user: User): Promise<void> {
+      if (user.resetToken) {
+        const key = `${RedisConstants.resetTokenPrefix}${user.resetToken}`;
+        await this.redisService.del(key);
+      }
+  
+      user.resetToken = null;
+      await this.userRepository.save(user);
+    }
+  
+    async updatePassword(user: User): Promise<void> {
+  
+      await this.userRepository.save(user);
     }
 
     generateActivationToken(user: User): string {
@@ -224,14 +236,23 @@ async requestPasswordReset(email: string): Promise<void> {
     }
      
     async sendActivationEmail(user: User): Promise<void> {
-      await this.mailService.sendActivationEmail(user);
-    }
-
-    async removeResetToken(user: User): Promise<void> {
       try {
-        await this.redisService.del(`${RedisConstants.resetTokenPrefix}${user.resetToken}`);
+        const resetToken = await this.generateResetToken(user);
+        const resetLink = `resetToken=${resetToken}`;
+        const subject = 'Password Reset';
+        const text = `To reset your password, click the following link: ${resetLink}`;
+    
+        await this.mailService.sendMail({
+          from: this.configService.get<string>('EMAIL_FROM'), 
+          to: user.email,
+          subject,
+          text,
+        });
+    
+        console.log('Password reset email sent successfully.');
       } catch (error) {
-        console.error('Error deleting the reset token:', error);
+        console.error('Error sending password reset email:', error);
+        throw new InternalServerErrorException('Error sending password reset email');
       }
     }
 
