@@ -2,7 +2,6 @@ import { RedisModuleOptions, RedisOptionsFactory } from "@liaoliaots/nestjs-redi
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-  
   interface CustomRedisModuleOptions extends RedisModuleOptions {
     host: string;
     port: number;

@@ -1,4 +1,4 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { RedisClientService } from './redis.client.service';
 import { RedisConstants } from './redis.client.constants';
 import { IRedisModuleAsyncOptions, IRedisModuleOptionsFactory } from './redis.client.interface';
@@ -7,13 +7,13 @@ import { RedisOptions } from 'ioredis';
 @Module({})
 export class RedisClientModule {
   static forRootAsync(options: IRedisModuleAsyncOptions): DynamicModule {
-    const redisClientOptionsProvider = {
+    const redisClientOptionsProvider: Provider = {
       provide: RedisConstants.options,
       useFactory: async (optionsFactory: IRedisModuleOptionsFactory) => await optionsFactory.createRedisModuleOptions(),
       inject: [options.useExisting],
     };
 
-    const redisClientProvider = {
+    const redisClientProvider: Provider = {
       provide: RedisConstants.client,
       useFactory: (opts: RedisOptions) => new RedisClientService(opts),
       inject: [RedisConstants.options],

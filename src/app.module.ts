@@ -9,6 +9,7 @@ import { PostgresConfig } from './config/typeorm.config';
 import { ConfigModule } from './config/config.module';
 import { RedisConfig } from './config/redis.config';
 import { JwtConfig } from './config/jwt.config';
+import { RedisClientModule } from './global/redis-client/redis.client.module';
 
 @Module({
   imports: [
@@ -24,11 +25,14 @@ import { JwtConfig } from './config/jwt.config';
       useExisting: RedisConfig,
       inject: [RedisConfig],
     }),
+    
     JwtModule.registerAsync({
       useExisting: JwtConfig,
       inject: [ConfigModule]
     }),
+    
     UserModule,
+    RedisClientModule,
     AuthModule,
     MailModule,
   ],

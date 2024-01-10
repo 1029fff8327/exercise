@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import Redis, { RedisOptions } from 'ioredis';
+import {Redis, RedisOptions } from 'ioredis';
 
 @Injectable()
 export class RedisClientService {
-  private readonly client: Redis;
 
   constructor(options: RedisOptions) {
     this.client = new Redis(options);
   }
+
+  private readonly client: Redis;
 
   async set(key: string, value: string, mode: string, duration: number): Promise<string> {
     if (mode === 'EX') {
@@ -24,4 +25,4 @@ export class RedisClientService {
   async del(key: string): Promise<number> {
     return this.client.del(key);
   }
-}
+} 

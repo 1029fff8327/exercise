@@ -1,5 +1,5 @@
 import {
-  BadRequestException, Injectable, InternalServerErrorException
+  BadRequestException, Inject, Injectable, InternalServerErrorException, forwardRef
  } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as argon2 from "argon2";
@@ -17,14 +17,15 @@ import { RedisConstants } from 'src/global/redis-client';
 export class AuthService {
   private readonly redisClient;
 
- constructor(
-  @InjectRepository(UserRepository) 
-  private readonly userRepository: UserRepository,
-  private readonly userService: UserService,
-  private readonly jwtService: JwtService,
-  private readonly mailService: MailService,
-  private readonly configService: ConfigService,
-  private readonly redisService: RedisClientService,
+  constructor(
+    @InjectRepository(UserRepository) 
+    private readonly userRepository: UserRepository,
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
+    private readonly configService: ConfigService,
+    @Inject(RedisClientService)
+    private readonly redisService: RedisClientService,
   ) {
     this.redisClient = this.redisService['getClient'] ? this.redisService['getClient']() : this.redisService;
   }
@@ -88,7 +89,6 @@ async requestPasswordReset(email: string): Promise<void> {
         throw new BadRequestException("An error occurred when resetting the password");
       }
     }
-
 
     async generateResetToken(user: User): Promise<string> {
       try {
