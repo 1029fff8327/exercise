@@ -5,15 +5,13 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class PostgresConfig implements TypeOrmOptionsFactory {
-    private readonly type: string;
     private readonly host: string;
     private readonly port: number;
     private readonly username: string;
     private readonly password: string;
     private readonly database: string;
 
-    constructor(configService: ConfigService) {
-        this.type = 'postgres'; 
+    constructor(private readonly configService: ConfigService) {
         this.host = configService.get('POSTGRES_HOST');
         this.port = configService.get('POSTGRES_PORT');
         this.username = configService.get('POSTGRES_USER');
@@ -29,11 +27,8 @@ export class PostgresConfig implements TypeOrmOptionsFactory {
             username: this.username,
             password: this.password,
             database: this.database,
-            entities: [User], 
-            synchronize: false, 
-            driver: {
-              type: 'postgres', 
-          },
+            entities: [User],
+            synchronize: false,
         };
     }
 }
