@@ -7,7 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PostgresConfig } from './config/typeorm.config';
 import { ConfigModule } from './config/config.module';
 import { RedisConfig } from './config/redis.config';
-import { JwtConfig } from './config/jwt.config'; 
+import { JwtConfig } from './config/jwt.config';
 import { RedisClientModule } from './global/redis-client/redis.client.module';
 
 @Module({
@@ -16,7 +16,7 @@ import { RedisClientModule } from './global/redis-client/redis.client.module';
     TypeOrmModule.forRootAsync({
       useClass: PostgresConfig,
       inject: [PostgresConfig],
-    }),    
+    }),
     JwtModule.registerAsync({
       useClass: JwtConfig,
       inject: [ConfigModule],

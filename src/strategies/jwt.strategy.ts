@@ -1,10 +1,14 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { verify as jwtVerify, JwtPayload } from 'jsonwebtoken'; 
+import { verify as jwtVerify, JwtPayload } from 'jsonwebtoken';
 import { IUser } from '../types/types';
-import { AuthService } from '../auth.service'; 
+import { AuthService } from '../auth/services/auth.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -21,24 +25,32 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(tokenPayload: any) {
     try {
-      const decodedToken = jwtVerify(tokenPayload, this.configService.get('JWT_SECRET')) as JwtPayload;
-      const { exp, iat, ...user } = typeof decodedToken === 'string' ? {} as IUser : decodedToken as IUser;
+      const decodedToken = jwtVerify(
+        tokenPayload,
+        this.configService.get('JWT_SECRET'),
+      ) as JwtPayload;
+
+      const { exp, ...user } = decodedToken;
 
       const now = Math.floor(Date.now() / 1000);
       if (exp && now > exp) {
         throw new UnauthorizedException('The token has expired');
       }
 
-      const expirationBuffer = 60; 
+      const expirationBuffer = 60;
       if (exp && now + expirationBuffer > exp) {
-
-        const refreshedUser = await this.authService.refreshAccessToken(user as IUser);
+        const refreshedUser = await this.authService.refreshAccessToken(
+          user as IUser,
+        );
         if (refreshedUser) {
           return refreshedUser;
         }
       }
 
-      const sanitizedUser = { id: escape((user as IUser).id), email: escape((user as IUser).email) };
+      const sanitizedUser = {
+        id: escape((user as IUser).id),
+        email: escape((user as IUser).email),
+      };
 
       if (!sanitizedUser.id || !sanitizedUser.email) {
         throw new BadRequestException('Invalid user data');

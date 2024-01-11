@@ -7,8 +7,8 @@ export interface IUser {
   refreshToken?: string | null;
   accessToken?: string | null;
   expiresIn?: number;
-  exp?: number; 
-  iat?: number; 
+  exp?: number;
+  iat?: number;
   createdAt: Date;
   updatedAt: Date;
 }

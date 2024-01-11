@@ -1,2 +1,2 @@
-export * from '../redis-client/redis.client.interface';
-export * from '../redis-client/redis.client.constants';
+export * from './interfaces/redis.client.interface';
+export * from './constants/redis.client.constants';

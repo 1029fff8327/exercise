@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
+import { AuthService } from './services/auth.service';
+import { AuthController } from './controllers/auth.controller';
 import { UserModule } from 'src/user/user.module';
 import { PassportModule } from '@nestjs/passport';
-import { LocalStratege } from './strategies/local.strategy';
+import { LocalStrategy } from '../strategies/local.strategy';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { MailService } from 'src/mail/mail.service';
-import { UserService } from 'src/user/user.service';
+import { ConfigModule } from '@nestjs/config';
+import { JwtStrategy } from '../strategies/jwt.strategy';
+import { MailService } from 'src/mail/services/mail.service';
+import { UserService } from 'src/user/services/user.service';
 import { UserRepository } from 'src/repository/user.repository';
-import { RedisClientModule } from 'src/global/redis-client/redis.client.module'; 
+import { RedisClientModule } from 'src/global/redis-client/redis.client.module';
 import { RedisConfig } from 'src/config/redis.config';
 import { JwtConfig } from 'src/config/jwt.config';
 
@@ -19,7 +19,7 @@ import { JwtConfig } from 'src/config/jwt.config';
     UserModule,
     PassportModule,
     JwtModule.registerAsync({
-      useClass: JwtConfig, 
+      useClass: JwtConfig,
       inject: [ConfigModule],
     }),
     ConfigModule,
@@ -30,7 +30,7 @@ import { JwtConfig } from 'src/config/jwt.config';
   controllers: [AuthController],
   providers: [
     AuthService,
-    LocalStratege,
+    LocalStrategy,
     JwtStrategy,
     MailService,
     UserService,

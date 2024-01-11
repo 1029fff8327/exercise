@@ -6,21 +6,21 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // TODO: config
-  app.use(helmet({
+  app.use(
+    helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
           scriptSrc: ["'self'", "'unsafe-inline'", 'https://your-cdn.com'],
         },
       },
-    })
+    }),
   );
 
   const config = new DocumentBuilder()
-    .setTitle("api")
-    .setDescription("")
-    .setVersion("1.0")
+    .setTitle('api')
+    .setDescription('')
+    .setVersion('1.0')
     .addTag('API')
     .build();
 
@@ -31,4 +31,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-

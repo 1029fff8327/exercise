@@ -5,7 +5,8 @@ export interface IRedisModuleOptionsFactory {
   createRedisModuleOptions(): Promise<RedisOptions> | RedisOptions;
 }
 
-export interface IRedisModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
+export interface IRedisModuleAsyncOptions
+  extends Pick<ModuleMetadata, 'imports'> {
   useClass?: Type<IRedisModuleOptionsFactory>;
   useExisting?: Type<IRedisModuleOptionsFactory>;
   inject?: any[];

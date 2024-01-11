@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
-import { User } from '../user/user.model';
-import { ISendMailProps } from './models/mail.models';
-import { MailMapper } from './mappers/mail.mapper'; 
+import { User } from '../../user/models/user.model';
+import { ISendMailProps } from '../models/mail.models';
+import { MailMapper } from '../mappers/mail.mapper';
 
 @Injectable()
 export class MailService {
@@ -16,12 +16,15 @@ export class MailService {
       port: this.configService.get<number>('EMAIL_PORT'),
       auth: {
         user: this.configService.get<string>('EMAIL_USERNAME'),
-        pass: this.configService.get<string>('EMAIL_PASSWORD')
+        pass: this.configService.get<string>('EMAIL_PASSWORD'),
       },
     });
   }
 
-  async sendActivationEmail(data: { email: string, activationToken: string }): Promise<void> {
+  async sendActivationEmail(data: {
+    email: string;
+    activationToken: string;
+  }): Promise<void> {
     const mailProps: ISendMailProps = {
       from: this.configService.get<string>('EMAIL_FROM'),
       to: data.email,
