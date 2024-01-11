@@ -1,6 +1,7 @@
-import { RedisModuleOptions, RedisOptionsFactory } from "@liaoliaots/nestjs-redis";
+import { RedisModuleOptions } from "@liaoliaots/nestjs-redis";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { IRedisModuleOptionsFactory } from "src/global/redis-client";
 
   interface CustomRedisModuleOptions extends RedisModuleOptions {
     host: string;
@@ -9,7 +10,7 @@ import { ConfigService } from "@nestjs/config";
   }
   
   @Injectable()
-  export class RedisConfig implements RedisOptionsFactory {
+  export class RedisConfig implements IRedisModuleOptionsFactory {
     private readonly host: string;
     private readonly port: number;
     private readonly password: string;
@@ -20,7 +21,7 @@ import { ConfigService } from "@nestjs/config";
       this.password = configService.get('REDIS_PASSWORD');
     }
   
-    createRedisOptions(connectionName?: string): CustomRedisModuleOptions | Promise<CustomRedisModuleOptions> {
+    createRedisModuleOptions(connectionName?: string): CustomRedisModuleOptions | Promise<CustomRedisModuleOptions> {
       return {
         host: this.host,
         port: this.port,

@@ -6,5 +6,7 @@ export interface IRedisModuleOptionsFactory {
 }
 
 export interface IRedisModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  useExisting: Type<IRedisModuleOptionsFactory>;
+  useClass?: Type<IRedisModuleOptionsFactory>;
+  useExisting?: Type<IRedisModuleOptionsFactory>;
+  inject?: any[];
 }

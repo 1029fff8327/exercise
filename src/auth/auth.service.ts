@@ -1,5 +1,5 @@
 import {
-  BadRequestException, Inject, Injectable, InternalServerErrorException, forwardRef
+  BadRequestException, Injectable, InternalServerErrorException, 
  } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as argon2 from "argon2";
@@ -10,26 +10,24 @@ import { ConfigService } from '@nestjs/config';
 import { User } from 'src/user/user.model';  
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from 'src/repository/user.repository';
-import { RedisClientService } from 'src/global/redis-client/redis.client.service';
 import { RedisConstants } from 'src/global/redis-client';
+import Redis from 'ioredis';
 
 @Injectable()
 export class AuthService {
-  private readonly redisClient;
+  private readonly redisClient: Redis;
 
   constructor(
-    @InjectRepository(UserRepository) 
+    @InjectRepository(UserRepository)
     private readonly userRepository: UserRepository,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
-    @Inject(RedisClientService)
-    private readonly redisService: RedisClientService,
   ) {
-    this.redisClient = this.redisService['getClient'] ? this.redisService['getClient']() : this.redisService;
+   
+    this.redisClient = new Redis({ host: 'localhost', port: 6379 });
   }
-
 async requestPasswordReset(email: string): Promise<void> {
   try {
     const user = await this.userService.findByEmail(email);
@@ -98,7 +96,7 @@ async requestPasswordReset(email: string): Promise<void> {
         );
   
         const key = `${RedisConstants.resetTokenPrefix}${resetToken}`;
-        await this.redisService.set(key, user.id, 'EX', 3600);
+        await this.redisClient.set(key, user.id, 'EX', 3600);
   
         await this.userRepository.save(user);
   
@@ -114,7 +112,7 @@ async requestPasswordReset(email: string): Promise<void> {
       const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
   
       const key = `${RedisConstants.accessTokenPrefix}${accessToken}`;
-      this.redisService.set(key, user.id, 'EX', 3600);
+      this.redisClient.set(key, user.id, 'EX', 3600);
   
       return accessToken;
     }
@@ -128,7 +126,7 @@ async requestPasswordReset(email: string): Promise<void> {
       const refreshToken = this.jwtService.sign({ id, email }, { expiresIn: this.configService.get<number>('JWT_REFRESH_EXPIRATION_TIME') });
   
       const key = `${RedisConstants.refreshTokenPrefix}${refreshToken}`;
-      this.redisService.set(key, id, 'EX', 604800);
+      this.redisClient.set(key, id, 'EX', 604800);
   
       return refreshToken;
     }
@@ -152,13 +150,13 @@ async requestPasswordReset(email: string): Promise<void> {
   
     async verifyResetToken(resetToken: string): Promise<User | null> {
       const key = `${RedisConstants.resetTokenPrefix}${resetToken}`;
-      const userId = await this.redisService.get(key);
+      const userId = await this.redisClient.get(key);
   
       if (!userId) {
         throw new BadRequestException('Invalid or expired reset token');
       }
   
-      await this.redisService.del(key);
+      await this.redisClient.del(key);
   
       const user = await this.userRepository.findOne({ where: { id: userId } });
   
@@ -172,7 +170,7 @@ async requestPasswordReset(email: string): Promise<void> {
     async removeResetToken(user: User): Promise<void> {
       if (user.resetToken) {
         const key = `${RedisConstants.resetTokenPrefix}${user.resetToken}`;
-        await this.redisService.del(key);
+        await this.redisClient.del(key);
       }
   
       user.resetToken = null;
@@ -193,7 +191,7 @@ async requestPasswordReset(email: string): Promise<void> {
       const activationToken = this.jwtService.sign(payload, options);
       const key = `${RedisConstants.activationTokenPrefix}${activationToken}`;
   
-      this.redisService.set(key, user.id, 'EX', 3600); 
+      this.redisClient.set(key, user.id, 'EX', 3600); 
   
       return activationToken;
     }

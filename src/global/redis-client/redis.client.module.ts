@@ -1,29 +1,29 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common';
-import { RedisClientService } from './redis.client.service';
-import { RedisConstants } from './redis.client.constants';
-import { IRedisModuleAsyncOptions, IRedisModuleOptionsFactory } from './redis.client.interface';
-import { RedisOptions } from 'ioredis';
+import { RedisConfig } from 'src/config/redis.config'; 
+import { RedisConstants } from './redis.client.constants'; 
+import Redis from 'ioredis';
 
 @Module({})
 export class RedisClientModule {
-  static forRootAsync(options: IRedisModuleAsyncOptions): DynamicModule {
-    const redisClientOptionsProvider: Provider = {
-      provide: RedisConstants.options,
-      useFactory: async (optionsFactory: IRedisModuleOptionsFactory) => await optionsFactory.createRedisModuleOptions(),
-      inject: [options.useExisting],
+  static forRootAsync(options: { useClass: typeof RedisConfig }): DynamicModule {
+    const redisConfigProvider: Provider = {
+      provide: RedisConfig,
+      useClass: options.useClass,
     };
 
-    const redisClientProvider: Provider = {
+    const redisServiceProvider: Provider = {
       provide: RedisConstants.client,
-      useFactory: (opts: RedisOptions) => new RedisClientService(opts),
-      inject: [RedisConstants.options],
+      useFactory: async (config: RedisConfig) => {
+        const { host, port, password } = await config.createRedisModuleOptions();
+        return new Redis({ host, port, password });
+      },
+      inject: [RedisConfig],
     };
 
     return {
       module: RedisClientModule,
-      imports: options.imports,
-      providers: [redisClientOptionsProvider, redisClientProvider],
-      exports: [redisClientProvider],
+      providers: [redisConfigProvider, redisServiceProvider],
+      exports: [redisServiceProvider],
     };
   }
 }

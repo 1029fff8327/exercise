@@ -10,27 +10,32 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailService } from 'src/mail/mail.service';
 import { UserService } from 'src/user/user.service';
 import { UserRepository } from 'src/repository/user.repository';
-import { RedisClientModule } from 'src/global/redis-client/redis.client.module';
-import { RedisClientService } from 'src/global/redis-client/redis.client.service';
+import { RedisClientModule } from 'src/global/redis-client/redis.client.module'; 
+import { RedisConfig } from 'src/config/redis.config';
+import { JwtConfig } from 'src/config/jwt.config';
 
 @Module({
   imports: [
     UserModule,
     PassportModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule], 
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
-        signOptions: { 
-          expiresIn: configService.get('JWT_ACCESS_EXPIRATION_TIME'),
-        },
-      }),
-      inject: [ConfigService],
+      useClass: JwtConfig, 
+      inject: [ConfigModule],
     }),
     ConfigModule,
+    RedisClientModule.forRootAsync({
+      useClass: RedisConfig,
+    }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStratege, JwtStrategy, MailService, UserService, UserRepository, RedisClientService],
+  providers: [
+    AuthService,
+    LocalStratege,
+    JwtStrategy,
+    MailService,
+    UserService,
+    UserRepository,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}
