@@ -30,9 +30,9 @@ import { PostModule } from './posts/post.module';
     }),
     AuthModule,
     MailModule,
+    PostModule,
     LikeDislikeModule,
     CommentModule,
-    PostModule,
   ],
   controllers: [],
 })

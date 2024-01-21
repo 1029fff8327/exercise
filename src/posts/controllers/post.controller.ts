@@ -14,7 +14,7 @@ export class PostController {
   @ApiOperation({ summary: 'Create a post' })
   @ApiResponse({ status: 201, description: 'Post created successfully' })
   async createPost(@Body() createPostDto: CreatePostDto, @Request() req) {
-    const userId = req.user.id;
+    const userId = createPostDto.userId || req.user.id; 
     const createdPost = await this.postService.createPost(userId, createPostDto);
 
     return { post: createdPost };

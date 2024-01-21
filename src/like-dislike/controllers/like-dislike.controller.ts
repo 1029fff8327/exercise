@@ -10,7 +10,7 @@ export class LikeDislikeController {
   constructor(private readonly likeDislikeService: LikeDislikeService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Post(':postId/like')
+  @Post('like')
   @ApiOperation({ summary: 'Like a post', description: 'Like a post with the specified ID' })
   @ApiResponse({ status: 200, description: 'Post liked successfully' })
   async likePost(@Param('postId') postId: string, @Request() req, @Body() body: LikeDislikeDto) {
@@ -19,7 +19,7 @@ export class LikeDislikeController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post(':postId/dislike')
+  @Post('dislike')
   @ApiOperation({ summary: 'Dislike a post', description: 'Dislike a post with the specified ID' })
   @ApiResponse({ status: 200, description: 'Post disliked successfully' })
   async dislikePost(@Param('postId') postId: string, @Request() req, @Body() body: LikeDislikeDto) {

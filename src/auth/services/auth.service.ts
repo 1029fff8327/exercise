@@ -298,23 +298,27 @@ export class AuthService {
     return sanitizedUser;
   }
 
-  async activateAccount(token: string): Promise<void> {
+  async activateAccount(token: string): Promise<string> {
     try {
       const decodedToken = await this.jwtService.verifyAsync(token);
-
+  
       const user = await this.userService.findByEmail(decodedToken.email);
-
+  
       if (!user) {
         throw new BadRequestException('Invalid activation token');
       }
-
+  
       if (user.isActivated) {
         throw new BadRequestException('The account has already been activated');
       }
-
+  
       await this.userService.updateUserActivation(user.id, true);
+  
+      return user.id;
     } catch (error) {
+      console.error('Error activating account:', error);
       throw new BadRequestException('Invalid activation token');
     }
   }
+  
 }
