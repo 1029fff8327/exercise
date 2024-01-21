@@ -126,13 +126,9 @@ export class AuthController {
   ): Promise<{ message: string }> {
     try {
       const { token } = activateAccountDto;
-
       console.log('Received Activation Token:', token);
-
       const decodedToken = this.authService.verifyActivationToken(token);
-
       console.log('Decoded Activation Token:', decodedToken);
-
       await this.authService.activateAccount(token);
 
       return { message: 'The account has been successfully activated' };

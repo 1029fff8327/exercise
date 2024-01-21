@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { verify as jwtVerify, JwtPayload } from 'jsonwebtoken';
-import { IUser } from '../types/types';
+import { IUser } from '../types/user.types';
 import { AuthService } from '../auth/services/auth.service';
 
 @Injectable()

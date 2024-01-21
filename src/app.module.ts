@@ -9,6 +9,9 @@ import { ConfigModule } from './config/config.module';
 import { RedisConfig } from './config/redis.config';
 import { JwtConfig } from './config/jwt.config';
 import { RedisClientModule } from './global/redis-client/redis.client.module';
+import { LikeDislikeModule } from './like-dislike/like-dislike.module';
+import { CommentModule } from './comment/comment.module';
+import { PostModule } from './posts/post.module';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { RedisClientModule } from './global/redis-client/redis.client.module';
     }),
     AuthModule,
     MailModule,
+    LikeDislikeModule,
+    CommentModule,
+    PostModule,
   ],
   controllers: [],
 })

@@ -20,6 +20,6 @@ import { UserRepository } from 'src/repository/user.repository';
   ],
   controllers: [],
   providers: [UserRepository, UserService, JwtService],
-  exports: [UserService, TypeOrmModule],
+  exports: [UserService, TypeOrmModule, UserRepository],
 })
 export class UserModule {}
