@@ -9,19 +9,19 @@ import { JwtService } from '@nestjs/jwt';
 import { IUser } from '../../types/user.types';
 import { MailService } from 'src/mail/services/mail.service';
 import { ConfigService } from '@nestjs/config';
-import { User } from 'src/user/models/user.model';
+import { User } from 'src/user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserRepository } from 'src/repository/user.repository';
 import { RedisConstants } from 'src/global/redis-client';
 import Redis from 'ioredis';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   private readonly redisClient: Redis;
 
   constructor(
-    @InjectRepository(UserRepository)
-    private readonly userRepository: UserRepository,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,

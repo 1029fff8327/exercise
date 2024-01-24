@@ -84,6 +84,7 @@ export class AuthController {
       properties: {
         accessToken: { type: 'string' },
         refreshToken: { type: 'string' },
+        activationToken: { type: 'string' },
         expiresIn: { type: 'number' },
       },
     },
@@ -132,7 +133,6 @@ export class AuthController {
       throw new BadRequestException('Invalid activation token');
     }
   }
-
 
   @Post('reset-password')
   @ApiOperation({ summary: 'password reset' })

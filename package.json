@@ -18,7 +18,12 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typeorm": "ts-node ./node_modules/typeorm/cli"
+    "typeorm": "ts-node ./node_modules/typeorm/cli",
+    "migration:run": "npm run typeorm migration:run -- -d ./src/configuration/typeorm.config.ts",
+    "migration:generate": "npm run typeorm -- -d ./src/configuration/typeorm.config.ts migration:generate ./src/migrations/migrations/$npm_config_name",
+    "migration:create": "npm run typeorm -- migration:create ./src/migrations/$npm_config_name",
+    "migration:revert": "npm run typeorm -- -d ./src/configuration/typeOrm.config.ts migration:revert",
+    "db:drop": "npm run typeorm -- -d src/configuration/typeorm.config.ts schema:drop"
   },
   "dependencies": {
     "@liaoliaots/nestjs-redis": "^9.0.5",
@@ -29,7 +34,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/mongoose": "^10.0.2",
     "@nestjs/passport": "^10.0.3",
-    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/platform-express": "^10.3.0",
     "@nestjs/swagger": "^7.2.0",
     "@nestjs/typeorm": "^10.0.1",
     "@types/helmet": "^4.0.0",

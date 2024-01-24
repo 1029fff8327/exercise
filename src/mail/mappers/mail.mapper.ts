@@ -1,4 +1,4 @@
-import { ISendMailProps } from '../models/mail.models';
+import { ISendMailProps } from '../mail.entity';
 
 export class MailMapper {
   public static buildMailPayload(props: ISendMailProps): ISendMailProps {

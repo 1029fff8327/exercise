@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUUID, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -21,9 +21,9 @@ export class CreatePostDto {
   text: string;
 
   @ApiProperty({
-    description: 'Photo file (base64 encoded)',
-    example: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD/...',
+    description: 'Photo file',
+    type: 'string',
+    format: 'binary',
   })
-  @IsOptional()
-  photo?: string; 
+  photo: any;
 }
