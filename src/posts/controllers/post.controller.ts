@@ -1,15 +1,19 @@
-import { Controller, Post, Body, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, UseInterceptors, UploadedFile, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { PostService } from '../services/post.service';
 import { JwtAuthGuard } from 'src/guards/jwt.auth.guard';
-import { ApiResponse, ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiResponse, ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiParam } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MulterFile } from 'multer';
+import { UserService } from 'src/user/services/user.service';
 
 @ApiTags('posts')
 @Controller('posts')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly userService: UserService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post('create')
@@ -20,10 +24,9 @@ export class PostController {
     schema: {
       type: 'object',
       properties: {
-        userId: {
+        nickname: {
           type: 'string',
-          description: 'User ID',
-          format: 'uuid',
+          description: 'Nickname of the user',
         },
         text: {
           type: 'string',
@@ -34,18 +37,34 @@ export class PostController {
           format: 'binary', 
         },
       },
-      required: ['userId', 'text', 'photo'],
+      required: ['nickname', 'text', 'photo'],
     },
+  })
+  @ApiParam({
+    name: 'nickname',
+    description: 'Nickname of the user',
+    required: true,
+    type: 'string',
   })
   @UseInterceptors(FileInterceptor('photo'))
   async createPost(
     @Body() createPostDto: CreatePostDto,
-    @Request() req,
     @UploadedFile() photo: MulterFile,
   ) {
-    const userId = req.user.id;
-    const createdPost = await this.postService.createPost(userId, createPostDto, photo);
+    try {
+      const nickname = createPostDto.nickname;
+      const user = await this.userService.findByNickname(nickname);
 
-    return { post: createdPost };
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const createdPost = await this.postService.createPost(user.id, createPostDto, photo);
+
+      return { post: createdPost };
+    } catch (error) {
+      console.error('Error creating post:', error);
+      throw new HttpException('Internal server error while creating post', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

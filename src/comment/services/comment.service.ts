@@ -6,7 +6,7 @@ export class CommentService {
   private readonly FILE_SERVICE_BASE_URL = 'http://localhost:3000';  
 
   async addComment(postId: string, userId: string, text: string): Promise<void> {
-    const fileServiceUrl = `${this.FILE_SERVICE_BASE_URL}/posts/${postId}/comment`;
+    const fileServiceUrl = `${this.FILE_SERVICE_BASE_URL}/comments/${postId}/comment`; 
 
     try {
       await axios.post(fileServiceUrl, { userId, text });

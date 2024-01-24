@@ -16,7 +16,7 @@ export class UserService {
     try {
       let user: User | undefined;
 
-      await this.validateUserDoesNotExist(createUserDto.email);
+      await this.validateUserDoesNotExist(createUserDto.email, createUserDto.nickname);
 
       user = await this.saveUser(createUserDto);
 
@@ -28,18 +28,18 @@ export class UserService {
     }
   }
 
-  private async validateUserDoesNotExist(email: string): Promise<void> {
+  private async validateUserDoesNotExist(email: string, nickname: string): Promise<void> {
     try {
       console.log('Attempting to find user by email:', email);
-      const existingUser = await this.userRepository.findOne({ where: { email } });
+      const existingUser = await this.userRepository.findOne({ where: [{ email }, { nickname }] });
 
       if (existingUser) {
         console.log('User found:', existingUser);
-        throw new HttpException('This email address already exists', HttpStatus.BAD_REQUEST);
+        throw new HttpException('This email address or nickname already exists', HttpStatus.BAD_REQUEST);
       }
     } catch (error) {
       console.error('Error validating user existence:', error);
-      if (!(error instanceof HttpException && error.getResponse() === 'This email address already exists')) {
+      if (!(error instanceof HttpException && error.getResponse() === 'This email address or nickname already exists')) {
         console.error('Unexpected error:', error);
         throw new HttpException('Internal server error during user validation', HttpStatus.INTERNAL_SERVER_ERROR);
       }
@@ -51,6 +51,7 @@ export class UserService {
       const user = await this.userRepository.save({
         email: createUserDto.email,
         password: await argon2.hash(createUserDto.password),
+        nickname: createUserDto.nickname,
       });
 
       return user;
@@ -113,6 +114,16 @@ export class UserService {
       await this.userRepository.save(existingUser);
     } catch (error) {
       throw new BadRequestException('Failed to update the user');
+    }
+  }
+
+  async findByNickname(nickname: string): Promise<User | undefined> {
+    try {
+      const user = await this.userRepository.findOne({ where: { nickname } });
+      return user;
+    } catch (error) {
+      console.error('Error when searching by nickname:', error);
+      throw new BadRequestException('The user could not be found by nickname');
     }
   }
 

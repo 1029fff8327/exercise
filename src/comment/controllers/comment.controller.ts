@@ -10,7 +10,7 @@ export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Post('comment')
+  @Post(':postId/comment')
   @ApiOperation({ summary: 'Add a comment', description: 'Add a comment to the post with the specified ID' })
   @ApiResponse({ status: 201, description: 'Comment added successfully' })
   async addComment(@Param('postId') postId: string, @Body() body: AddCommentDto) {

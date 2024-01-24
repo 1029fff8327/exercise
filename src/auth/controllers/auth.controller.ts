@@ -111,7 +111,7 @@ export class AuthController {
     }
   }
 
-  @ApiOperation({ summary: 'Activate your account' })
+    @ApiOperation({ summary: 'Activate your account' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The account has been successfully activated',
@@ -121,13 +121,13 @@ export class AuthController {
     description: 'Invalid activation token',
   })
   @Post('activate-account')
-  async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{ userId: string }> {
+  async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<{ message: string }> {
     try {
       const { token } = activateAccountDto;
       console.log('Received Activation Token:', token);
-      const userId = await this.authService.activateAccount(token);
-      
-      return { userId };
+      await this.authService.activateAccount(token);
+
+      return { message: 'The account has been successfully activated' };
     } catch (error) {
       console.error('Error activating account:', error);
       throw new BadRequestException('Invalid activation token');

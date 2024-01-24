@@ -6,7 +6,7 @@ export class LikeDislikeService {
   private readonly FILE_SERVICE_BASE_URL = 'http://localhost:3000';  
 
   async likePost(postId: string, userId: string): Promise<void> {
-    const fileServiceUrl = `${this.FILE_SERVICE_BASE_URL}/posts/${postId}/like`;
+    const fileServiceUrl = `${this.FILE_SERVICE_BASE_URL}/like-dislike/like/${postId}`; 
 
     try {
       await axios.post(fileServiceUrl, { userId });
@@ -17,7 +17,7 @@ export class LikeDislikeService {
   }
 
   async dislikePost(postId: string, userId: string): Promise<void> {
-    const fileServiceUrl = `${this.FILE_SERVICE_BASE_URL}/posts/${postId}/dislike`;
+    const fileServiceUrl = `${this.FILE_SERVICE_BASE_URL}/like-dislike/dislike/${postId}`; 
 
     try {
       await axios.post(fileServiceUrl, { userId });

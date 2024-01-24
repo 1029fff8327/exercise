@@ -3,11 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   Index,
-  OneToMany, 
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Post } from 'src/posts/post.entity';  
+import { Post } from 'src/posts/post.entity';
 
 @Entity()
 export class User {
@@ -36,12 +36,15 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   accessToken: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  nickname: string; 
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Post, post => post.user)
+  @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
 }

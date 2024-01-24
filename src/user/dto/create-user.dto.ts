@@ -2,13 +2,17 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, Length } from 'class-validator';
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'user@gmail.com', description: 'Postal address' })
+  @ApiProperty({ example: 'user@gmail.com', description: 'Email address' })
   @IsString({ message: 'Must be a string' })
-  @IsEmail({}, { message: 'Non-direct email' })
+  @IsEmail({}, { message: 'Invalid email format' })
   public readonly email: string;
 
   @ApiProperty({ example: '01927328', description: 'Password' })
   @IsString({ message: 'Must be a string' })
-  @Length(4, 16, { message: 'No less than 4 and no more than 16' })
+  @Length(4, 16, { message: 'Must be between 4 and 16 characters' })
   public readonly password: string;
+
+  @ApiProperty({ example: 'JohnDoe', description: 'Nickname' }) 
+  @IsString({ message: 'Must be a string' })
+  public readonly nickname: string;
 }

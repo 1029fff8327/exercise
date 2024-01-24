@@ -3,14 +3,12 @@ import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
 
 export class CreatePostDto {
   @ApiProperty({
-    description: 'User ID',
-    example: '12345',
-    format: 'uuid',
+    description: 'Nickname of the user',
+    example: 'john_doe',
   })
   @IsString({ message: 'Must be a string' })
-  @IsNotEmpty({ message: 'User ID cannot be empty' })
-  @IsUUID('4', { message: 'Invalid UUID format' })
-  userId: string;
+  @IsNotEmpty({ message: 'Nickname cannot be empty' })
+  nickname: string;
 
   @ApiProperty({
     description: 'Text content of the post',

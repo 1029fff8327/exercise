@@ -12,6 +12,9 @@ export class Post {
   @Column({ type: 'varchar', length: 255 })  
   fileId: string;
 
+  @Column({ type: 'varchar', length: 255 })  
+  nickname: string; 
+
   @CreateDateColumn()
   createdAt: Date;
 
